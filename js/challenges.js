@@ -244,14 +244,14 @@ class LRUCache:
     id: 'html-modal',
     mode: 'code',
     language: 'html',
-    title: 'Accessible Native Dialog',
+    title: 'Accessible Confirmation Dialog',
     difficulty: 'beginner',
     description: 'Semantic HTML5 dialog element with header, body content, and action controls.',
-    expectedOutput: 'Renders an accessible modal dialog with backdrop and actions.',
+    expectedOutput: 'Renders an accessible confirmation modal dialog with backdrop and actions.',
     previewType: 'html',
     cssContext: `
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f141c; color: #e2e8f0; padding: 24px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-      dialog { background: #161d27; color: #e2e8f0; border: 1px solid #2a3442; border-radius: 12px; padding: 24px; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: block; position: static; }
+      dialog { background: #161d27; color: #e2e8f0; border: 1px solid #2a3442; border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; min-width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: block; position: static; box-sizing: border-box; }
       .dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
       .dialog-header h3 { margin: 0; font-size: 1.1rem; color: #f8fafc; font-weight: 600; }
       p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0 0 20px 0; }

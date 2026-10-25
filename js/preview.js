@@ -1,7 +1,7 @@
 /**
  * CodeReflex - Live Preview Component
- * Handles dynamic sandbox rendering for HTML/CSS and interactive
- * simulated execution console for JS/Python.
+ * Handles Target Design preview (Ready state) and Progressive Live Build
+ * as the user types HTML/CSS or simulated execution for JS/Python.
  */
 
 export class PreviewManager {
@@ -9,6 +9,11 @@ export class PreviewManager {
     this.container = containerEl;
     this.currentChallenge = null;
     this.activeTab = 'preview'; // 'preview' | 'specs'
+    this.currentState = 'ready'; // 'ready' | 'building' | 'completed'
+    this.currentProgress = 0;
+    this.currentTypedText = '';
+    this.showingTarget = false; // When building, user can peek at target
+
     this.init();
   }
 
@@ -29,14 +34,32 @@ export class PreviewManager {
           </button>
         </div>
         <div class="preview-controls">
-          <span class="preview-badge" id="preview-status-badge">Ready</span>
-          <button class="preview-reload-btn" id="preview-refresh-btn" title="Refresh Preview">
+          <span class="preview-badge" id="preview-status-badge">Target Design</span>
+          <button class="preview-reload-btn" id="preview-refresh-btn" title="Reset View">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>
           </button>
         </div>
       </div>
+
+      <!-- Preview Sub-Header Status Banner -->
+      <div class="preview-status-banner" id="preview-status-banner">
+        <div class="banner-left">
+          <span class="banner-badge badge-ready" id="banner-state-badge">Target Design</span>
+          <span class="banner-title" id="banner-challenge-title">Challenge</span>
+        </div>
+        <div class="banner-right">
+          <div class="banner-hint" id="banner-hint-text">
+            <span class="pulse-indicator"></span>
+            <span id="banner-hint-msg">Start typing in editor to build</span>
+          </div>
+          <button type="button" class="banner-toggle-btn" id="banner-toggle-target-btn" style="display:none;">
+            View Target
+          </button>
+        </div>
+      </div>
+
       <div class="preview-body" id="preview-content-area">
         <!-- Dynamic content injected here -->
       </div>
@@ -55,13 +78,27 @@ export class PreviewManager {
     const refreshBtn = this.container.querySelector('#preview-refresh-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
-        this.update(0);
+        this.showingTarget = false;
+        this.update(this.currentProgress, this.currentTypedText);
+      });
+    }
+
+    const toggleTargetBtn = this.container.querySelector('#banner-toggle-target-btn');
+    if (toggleTargetBtn) {
+      toggleTargetBtn.addEventListener('click', () => {
+        this.showingTarget = !this.showingTarget;
+        this.renderActiveState();
       });
     }
   }
 
   setChallenge(challenge) {
     this.currentChallenge = challenge;
+    this.currentState = 'ready';
+    this.currentProgress = 0;
+    this.currentTypedText = '';
+    this.showingTarget = false;
+
     const tabTitle = this.container.querySelector('#preview-tab-title');
     if (tabTitle) {
       if (challenge.mode === 'build') {
@@ -74,6 +111,7 @@ export class PreviewManager {
         tabTitle.textContent = 'Live Render';
       }
     }
+
     this.renderContent();
   }
 
@@ -85,25 +123,89 @@ export class PreviewManager {
   update(progressPercent, typedText = '') {
     if (!this.currentChallenge) return;
 
-    const badge = this.container.querySelector('#preview-status-badge');
-    if (badge) {
-      if (progressPercent >= 100) {
-        badge.textContent = 'Compiled';
-        badge.className = 'preview-badge badge-success';
-      } else if (progressPercent > 0) {
-        badge.textContent = `Typing ${progressPercent}%`;
-        badge.className = 'preview-badge badge-active';
-      } else {
-        badge.textContent = 'Idle';
-        badge.className = 'preview-badge';
-      }
+    this.currentProgress = progressPercent;
+    this.currentTypedText = typedText;
+
+    // Determine state
+    if (progressPercent >= 100) {
+      this.currentState = 'completed';
+      this.showingTarget = false;
+    } else if (progressPercent > 0 || (typedText && typedText.length > 0)) {
+      this.currentState = 'building';
+    } else {
+      // 0 progress = ready / restarted
+      this.currentState = 'ready';
+      this.showingTarget = false;
     }
 
+    this.updateStatusBanner();
+
     if (this.activeTab === 'preview') {
-      if (this.currentChallenge.mode === 'build' || this.currentChallenge.previewType === 'html' || this.currentChallenge.previewType === 'css') {
-        this.updateHtmlPreview(progressPercent, typedText);
-      } else if (this.currentChallenge.previewType === 'console' || this.currentChallenge.previewType === 'terminal') {
-        this.updateConsolePreview(progressPercent);
+      this.renderActiveState();
+    }
+  }
+
+  updateStatusBanner() {
+    const banner = this.container.querySelector('#preview-status-banner');
+    const badge = this.container.querySelector('#preview-status-badge');
+    const bannerBadge = this.container.querySelector('#banner-state-badge');
+    const bannerTitle = this.container.querySelector('#banner-challenge-title');
+    const bannerHint = this.container.querySelector('#banner-hint-msg');
+    const toggleBtn = this.container.querySelector('#banner-toggle-target-btn');
+
+    if (!bannerTitle || !this.currentChallenge) return;
+
+    bannerTitle.textContent = this.currentChallenge.title;
+
+    if (this.currentState === 'ready') {
+      // State A: Ready (Before Typing Starts)
+      if (badge) {
+        badge.textContent = 'Ready';
+        badge.className = 'preview-badge';
+      }
+      if (bannerBadge) {
+        bannerBadge.textContent = 'Target Design';
+        bannerBadge.className = 'banner-badge badge-ready';
+      }
+      if (bannerHint) {
+        bannerHint.textContent = 'Start typing in editor to build';
+      }
+      if (toggleBtn) {
+        toggleBtn.style.display = 'none';
+      }
+    } else if (this.currentState === 'building') {
+      // State B: Building (In Progress)
+      if (badge) {
+        badge.textContent = `Building ${this.currentProgress}%`;
+        badge.className = 'preview-badge badge-active';
+      }
+      if (bannerBadge) {
+        bannerBadge.textContent = this.showingTarget ? 'Target Preview' : `Live Build • ${this.currentProgress}%`;
+        bannerBadge.className = 'banner-badge badge-building';
+      }
+      if (bannerHint) {
+        bannerHint.textContent = this.showingTarget ? 'Viewing target reference' : 'Progressively rendering your code';
+      }
+      if (toggleBtn) {
+        toggleBtn.style.display = 'inline-block';
+        toggleBtn.textContent = this.showingTarget ? 'Back to Live Build' : 'View Target';
+        toggleBtn.classList.toggle('active', this.showingTarget);
+      }
+    } else if (this.currentState === 'completed') {
+      // State C: Completed
+      if (badge) {
+        badge.textContent = 'Compiled';
+        badge.className = 'preview-badge badge-success';
+      }
+      if (bannerBadge) {
+        bannerBadge.textContent = 'Completed';
+        bannerBadge.className = 'banner-badge badge-completed';
+      }
+      if (bannerHint) {
+        bannerHint.textContent = '✓ Component built successfully';
+      }
+      if (toggleBtn) {
+        toggleBtn.style.display = 'none';
       }
     }
   }
@@ -127,96 +229,185 @@ export class PreviewManager {
           <iframe id="preview-sandbox-iframe" sandbox="allow-same-origin" title="Live Preview"></iframe>
         </div>
       `;
-      this.updateHtmlPreview(0, '');
+      this.renderActiveState();
     } else if (pType === 'console' || pType === 'terminal') {
       contentArea.innerHTML = `
         <div class="terminal-container" id="terminal-view">
           <!-- Terminal lines render here -->
         </div>
       `;
-      this.updateConsolePreview(0);
+      this.renderActiveState();
     } else if (pType === 'reading') {
       this.renderReadingInsights(contentArea);
     }
   }
 
-  updateHtmlPreview(progressPercent, typedText) {
+  renderActiveState() {
+    this.updateStatusBanner();
+
+    const mode = this.currentChallenge.mode;
+    const pType = this.currentChallenge.previewType;
+
+    if (mode === 'build' || pType === 'html' || pType === 'css') {
+      this.updateHtmlPreview();
+    } else if (pType === 'console' || pType === 'terminal') {
+      this.updateConsolePreview();
+    }
+  }
+
+  /**
+   * Renders either the completed target or the user's progressive code
+   */
+  updateHtmlPreview() {
     const iframe = this.container.querySelector('#preview-sandbox-iframe');
-    if (!iframe) return;
+    if (!iframe || !this.currentChallenge) return;
 
-    let htmlContent = '';
-    let cssContent = '';
+    let htmlToRender = '';
+    let cssToRender = '';
 
-    if (this.currentChallenge.mode === 'build') {
-      cssContent = this.currentChallenge.baseStyles || '';
-      // Progressive reveal: if incomplete, reveal typed partial HTML with safe fallback
-      if (progressPercent >= 98) {
-        htmlContent = this.currentChallenge.code;
-      } else if (progressPercent > 10) {
-        // Render typed text or target snippet with opacity mask
-        htmlContent = `
-          <div style="opacity: ${Math.max(0.25, progressPercent / 100)}; transition: opacity 0.2s;">
-            ${this.safeHtmlSlice(this.currentChallenge.code, progressPercent)}
-          </div>
-        `;
-      } else {
-        htmlContent = `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; color:#64748b; font-family:sans-serif; text-align:center; padding:20px;">
-            <div style="width:40px; height:40px; border-radius:8px; border:2px dashed #334155; margin-bottom:12px; display:flex; align-items:center; justify-content:center;">
-              <span style="font-size:18px;">⚡</span>
-            </div>
-            <p style="font-size:14px; margin:0 0 6px 0; color:#94a3b8; font-weight:500;">Component Wireframe</p>
-            <p style="font-size:12px; margin:0;">Start typing code to construct the UI live.</p>
-          </div>
-        `;
+    const isShowingTarget = (this.currentState === 'ready' || (this.currentState === 'building' && this.showingTarget) || this.currentState === 'completed');
+
+    if (isShowingTarget) {
+      // 1. Full Completed Target Design
+      if (this.currentChallenge.mode === 'build') {
+        htmlToRender = this.currentChallenge.code;
+        cssToRender = this.currentChallenge.baseStyles || '';
+      } else if (this.currentChallenge.previewType === 'html') {
+        htmlToRender = this.currentChallenge.code;
+        cssToRender = this.currentChallenge.cssContext || '';
+      } else if (this.currentChallenge.previewType === 'css') {
+        htmlToRender = this.currentChallenge.htmlContext || '';
+        cssToRender = this.currentChallenge.code;
       }
-    } else if (this.currentChallenge.previewType === 'html') {
-      cssContent = this.currentChallenge.cssContext || '';
-      htmlContent = progressPercent >= 95 ? this.currentChallenge.code : this.safeHtmlSlice(this.currentChallenge.code, progressPercent);
-    } else if (this.currentChallenge.previewType === 'css') {
-      htmlContent = this.currentChallenge.htmlContext || '';
-      cssContent = progressPercent >= 95 ? this.currentChallenge.code : this.currentChallenge.code;
+    } else {
+      // 2. Progressive Live Build from User's Typed Code
+      if (this.currentChallenge.mode === 'build') {
+        cssToRender = this.currentChallenge.baseStyles || '';
+        htmlToRender = this.sanitizeAndCloseHtml(this.currentTypedText);
+      } else if (this.currentChallenge.previewType === 'html') {
+        cssToRender = this.currentChallenge.cssContext || '';
+        htmlToRender = this.sanitizeAndCloseHtml(this.currentTypedText);
+      } else if (this.currentChallenge.previewType === 'css') {
+        htmlToRender = this.currentChallenge.htmlContext || '';
+        cssToRender = this.sanitizePartialCss(this.currentTypedText);
+      }
     }
 
-    const docContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            ${cssContent}
-          </style>
-        </head>
-        <body>
-          ${htmlContent}
-        </body>
-      </html>
-    `;
-
-    iframe.srcdoc = docContent;
+    this.injectIntoIframe(iframe, htmlToRender, cssToRender);
   }
 
-  safeHtmlSlice(fullCode, progress) {
-    if (progress >= 100) return fullCode;
-    // For clean preview rendering during typing, render the full skeleton with dynamic opacity or progressive build
-    return `
-      <div class="render-wrapper" style="opacity: ${Math.min(1, Math.max(0.15, progress / 100))}; filter: blur(${progress < 30 ? '1px' : '0px'}); transition: all 0.3s ease;">
-        ${fullCode}
-      </div>
-    `;
+  /**
+   * Injects HTML and CSS into the sandbox iframe with zero flicker
+   */
+  injectIntoIframe(iframe, htmlContent, cssContent) {
+    const fullDoc = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style id="preview-style">
+      ${cssContent}
+    </style>
+  </head>
+  <body>
+    <div id="preview-root">${htmlContent}</div>
+  </body>
+</html>`;
+
+    try {
+      const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+      if (doc && doc.getElementById('preview-style') && doc.getElementById('preview-root')) {
+        // Direct fast DOM update: prevents white flash and retains iframe stability
+        doc.getElementById('preview-style').textContent = cssContent;
+        doc.getElementById('preview-root').innerHTML = htmlContent;
+        return;
+      }
+    } catch {
+      // Fallback if cross-origin or uninitialized
+    }
+
+    iframe.srcdoc = fullDoc;
   }
 
-  updateConsolePreview(progressPercent) {
+  /**
+   * Progressively repairs and auto-closes unclosed HTML tags as the user types
+   */
+  sanitizeAndCloseHtml(rawHtml) {
+    if (!rawHtml || !rawHtml.trim()) return '';
+
+    // 1. Strip scripts and inline handlers for absolute safety
+    let safe = rawHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    safe = safe.replace(/on\w+\s*=\s*['\"][^'\"]*['\"]/gi, '');
+    safe = safe.replace(/on\w+\s*=\s*[^>\s]+/gi, '');
+
+    // 2. If the user is mid-typing a tag (e.g. '<h3' or '<button cla'), strip the incomplete trailing tag
+    safe = safe.replace(/<[^>]*$/, '');
+
+    // 3. Track unclosed tags and auto-close them in reverse order
+    const openTags = [];
+    const tagRegex = /<\/?([a-zA-Z0-9]+)(\s+[^>]*?)?(\/?)>/g;
+    const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+    let match;
+
+    while ((match = tagRegex.exec(safe)) !== null) {
+      const isClosing = match[0].startsWith('</');
+      const tagName = match[1].toLowerCase();
+      const isSelfClosing = match[3] === '/' || voidTags.has(tagName);
+
+      if (isClosing) {
+        const idx = openTags.lastIndexOf(tagName);
+        if (idx !== -1) {
+          openTags.splice(idx, 1);
+        }
+      } else if (!isSelfClosing) {
+        openTags.push(tagName);
+      }
+    }
+
+    // Auto-close open tags
+    while (openTags.length > 0) {
+      safe += '</' + openTags.pop() + '>';
+    }
+
+    return safe;
+  }
+
+  /**
+   * Progressively auto-closes unclosed CSS blocks
+   */
+  sanitizePartialCss(rawCss) {
+    if (!rawCss || !rawCss.trim()) return '';
+
+    // Strip unclosed comments
+    let clean = rawCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    clean = clean.replace(/\/\*[\s\S]*$/, '');
+
+    let openCount = (clean.match(/{/g) || []).length;
+    let closeCount = (clean.match(/}/g) || []).length;
+
+    while (openCount > closeCount) {
+      clean += ' }';
+      closeCount++;
+    }
+
+    return clean;
+  }
+
+  /**
+   * Terminal Console preview for JavaScript and Python
+   */
+  updateConsolePreview() {
     const termView = this.container.querySelector('#terminal-view');
-    if (!termView || !this.currentChallenge.previewContent) return;
+    if (!termView || !this.currentChallenge || !this.currentChallenge.previewContent) return;
 
     const data = this.currentChallenge.previewContent;
     const lines = data.terminalLines || [];
+    const isReady = (this.currentState === 'ready');
+    const isCompleted = (this.currentState === 'completed');
 
-    // Calculate how many terminal output lines to reveal based on typing progress
-    const linesToShow = progressPercent === 0 
-      ? 1 
-      : Math.min(lines.length, Math.ceil((progressPercent / 100) * lines.length));
+    // In ready state, show the target expected output
+    const linesToShow = isReady 
+      ? lines.length 
+      : (isCompleted ? lines.length : Math.max(1, Math.ceil((this.currentProgress / 100) * lines.length)));
 
     let html = `
       <div class="term-window">
@@ -226,7 +417,9 @@ export class PreviewManager {
             <span class="dot dot-yellow"></span>
             <span class="dot dot-green"></span>
           </div>
-          <div class="term-title">${this.currentChallenge.language === 'python' ? 'python3 (simulated virtualenv)' : 'node v20.x runner'}</div>
+          <div class="term-title">
+            ${this.currentChallenge.language === 'python' ? 'python3 runner' : 'node runner'} — ${isReady ? 'Expected Target Execution' : 'Live Execution'}
+          </div>
         </div>
         <div class="term-output">
     `;
@@ -252,11 +445,18 @@ export class PreviewManager {
       html += `<div class="${lineClass}">${icon}<span class="term-text">${this.escapeHtml(line.text)}</span></div>`;
     }
 
-    if (progressPercent < 100) {
+    if (isReady) {
+      html += `
+        <div class="term-line term-cursor-line" style="color:var(--accent-cyan);">
+          <span class="term-prompt">&gt;</span>
+          <span class="term-typing-indicator">Target benchmark reference ready. Start typing code to execute live.</span>
+        </div>
+      `;
+    } else if (!isCompleted) {
       html += `
         <div class="term-line term-cursor-line">
           <span class="term-prompt">&gt;</span>
-          <span class="term-typing-indicator">Typing snippet... (${progressPercent}% complete)</span>
+          <span class="term-typing-indicator">Typing snippet... (${this.currentProgress}% complete)</span>
           <span class="term-caret"></span>
         </div>
       `;
@@ -273,18 +473,20 @@ export class PreviewManager {
       </div>
     `;
 
-    // Also include test suite results if present
+    // Automated test verification checks
     if (data.tests) {
       html += `
         <div class="term-test-suite">
           <div class="test-suite-header">
             <span>Automated Verification Checks</span>
-            <span class="test-counter">${progressPercent >= 100 ? `${data.tests.length}/${data.tests.length} PASS` : `Running (${progressPercent}%)`}</span>
+            <span class="test-counter">
+              ${isReady ? '3/3 Target Criteria' : (isCompleted ? `${data.tests.length}/${data.tests.length} PASS` : `Running (${this.currentProgress}%)`)}
+            </span>
           </div>
           <div class="test-list">
       `;
       data.tests.forEach((t, idx) => {
-        const isPassed = progressPercent >= ((idx + 1) / data.tests.length) * 100;
+        const isPassed = isReady || isCompleted || (this.currentProgress >= ((idx + 1) / data.tests.length) * 100);
         html += `
           <div class="test-item ${isPassed ? 'test-passed' : 'test-pending'}">
             <span class="test-icon">${isPassed ? '✓' : '○'}</span>
@@ -362,4 +564,3 @@ export class PreviewManager {
       .replace(/"/g, '&quot;');
   }
 }
-

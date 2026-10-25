@@ -279,7 +279,7 @@ class CodeReflexApp {
     if (!this.activeChallenge) return;
     this.engine.reset();
     this.editor.renderSnippet(this.engine.targetText);
-    this.preview.update(0);
+    this.preview.update(0, '');
     this.updateStatsDisplay(this.engine.getMetrics());
     this.editor.focus();
   }
@@ -322,7 +322,7 @@ class CodeReflexApp {
     });
 
     // Update preview to 100% finished
-    this.preview.update(100);
+    this.preview.update(100, this.engine.targetText);
 
     // Trigger celebration modal
     this.modals.showCompletion(metrics, this.activeChallenge);
