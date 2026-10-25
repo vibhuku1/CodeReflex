@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeReflex — Modern Developer Typing Practice</title>
+  <meta name="description" content="Improve coding typing speed, accuracy, and syntax confidence with real-world programming snippets and live-rendered components.">
+  
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/preview.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Main Application Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <a href="#" class="brand-wrapper" title="CodeReflex Home">
+          <div class="brand-symbol">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <span class="brand-text">CodeReflex</span>
+          <span class="brand-badge">v0.1</span>
+        </a>
+
+        <!-- Practice Mode Switcher -->
+        <nav class="mode-tabs-container" aria-label="Practice Modes">
+          <button class="mode-tab" data-mode="normal" title="Normal prose typing to test baseline speed">
+            <span>Normal</span>
+          </button>
+          <button class="mode-tab active" data-mode="code" title="Practice real programming syntax across languages">
+            <span>Code</span>
+          </button>
+          <button class="mode-tab" data-mode="build" title="Type HTML/CSS code and watch the component render live">
+            <span>Type-to-Build</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="header-center">
+        <!-- Language Selector -->
+        <div class="header-select-group">
+          <label for="header-lang-select" class="header-select-label">Lang</label>
+          <select id="header-lang-select" class="select-control">
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+          </select>
+        </div>
+
+        <!-- Challenge Picker -->
+        <div class="header-select-group">
+          <label for="header-challenge-select" class="header-select-label">Snippet</label>
+          <select id="header-challenge-select" class="select-control">
+            <!-- Dynamically populated from challenges.js -->
+          </select>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Progress Telemetry Button -->
+        <button class="header-btn" id="header-progress-btn" title="View Typing Progress & Historical Stats">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 20V10M12 20V4M6 20v-6"/>
+          </svg>
+          <span>Progress</span>
+        </button>
+
+        <!-- Settings Button -->
+        <button class="header-btn" id="header-settings-btn" title="Editor & Engine Preferences">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Typing Statistics Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stats-metrics-group">
+        <div class="stat-item">
+          <span class="stat-label">WPM</span>
+          <span class="stat-value highlight" id="stat-wpm-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Accuracy</span>
+          <span class="stat-value success" id="stat-acc-value">100%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Time</span>
+          <span class="stat-value" id="stat-time-value">00:00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Chars</span>
+          <span class="stat-value" id="stat-chars-value">0/0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Errors</span>
+          <span class="stat-value danger" id="stat-errors-value">0</span>
+        </div>
+      </div>
+
+      <div class="stats-progress-group">
+        <div class="progress-track">
+          <div class="progress-fill" id="stat-progress-fill"></div>
+        </div>
+        <span class="progress-percentage" id="stat-progress-percent">0%</span>
+      </div>
+    </div>
+
+    <!-- Main Workspace Split Pane -->
+    <main class="workspace-split-view" id="workspace-split-view">
+      <!-- Left Panel: Code Typing Editor -->
+      <section class="workspace-pane editor-pane" id="editor-pane-container" aria-label="Code Editor Practice Panel">
+        <!-- Rendered by EditorView -->
+      </section>
+
+      <!-- Draggable Split Resizer -->
+      <div class="split-resizer" id="split-pane-resizer" role="separator" aria-label="Workspace split resizer"></div>
+
+      <!-- Right Panel: Live Preview & Inspection -->
+      <section class="workspace-pane preview-pane" id="preview-pane-container" aria-label="Live Preview Panel">
+        <!-- Rendered by PreviewManager -->
+      </section>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MODALS
+       ========================================================================== -->
+
+  <!-- 1. Challenge Completion Modal -->
+  <div class="modal-overlay hidden" id="completion-modal" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="modal-card">
+      <div class="modal-body">
+        <div class="completion-hero">
+          <div class="completion-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Snippet Complete</span>
+          </div>
+          <h2 class="completion-title" id="result-challenge-title">Debounce Utility</h2>
+          <div class="completion-sub"><span id="result-challenge-lang">JAVASCRIPT</span> &bull; Performance Recorded</div>
+        </div>
+
+        <!-- Primary Big Metrics -->
+        <div class="results-grid">
+          <div class="result-card-primary">
+            <div class="result-metric-label">Net Speed</div>
+            <div class="result-metric-value cyan"><span id="result-wpm">0</span> <small style="font-size:16px; font-weight:500; color:var(--text-muted);">WPM</small></div>
+          </div>
+          <div class="result-card-primary">
+            <div class="result-metric-label">Accuracy</div>
+            <div class="result-metric-value emerald"><span id="result-accuracy">100%</span></div>
+          </div>
+        </div>
+
+        <!-- Secondary Detail Row -->
+        <div class="results-secondary-row">
+          <div class="result-mini-stat">
+            <div class="result-mini-label">Elapsed Time</div>
+            <div class="result-mini-val" id="result-time">00:00</div>
+          </div>
+          <div class="result-mini-stat">
+            <div class="result-mini-label">Raw WPM</div>
+            <div class="result-mini-val" id="result-raw-wpm">0</div>
+          </div>
+          <div class="result-mini-stat">
+            <div class="result-mini-label">Mistakes</div>
+            <div class="result-mini-val" id="result-errors" style="color:var(--accent-rose)">0</div>
+          </div>
+          <div class="result-mini-stat">
+            <div class="result-mini-label">Typed Chars</div>
+            <div class="result-mini-val" id="result-chars">0</div>
+          </div>
+        </div>
+
+        <!-- Speed Progression Chart -->
+        <div id="result-chart-area"></div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="result-retry-btn">
+            <span>Retry Challenge</span>
+            <span class="btn-key-hint">Esc</span>
+          </button>
+          <button type="button" class="btn-primary" id="result-next-btn">
+            <span>Next Snippet</span>
+            <span class="btn-key-hint">Tab+Enter</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Settings Modal -->
+  <div class="modal-overlay hidden" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="settings-heading">Preferences</h3>
+        <button class="modal-close-btn modal-close-trigger" aria-label="Close settings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="settings-form">
+          <div class="settings-group">
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Editor Font Size</span>
+                <span class="setting-desc">Adjust code character scale for readability</span>
+              </div>
+              <select id="setting-font-size" class="select-control">
+                <option value="14">14px</option>
+                <option value="16" selected>16px (Default)</option>
+                <option value="18">18px</option>
+                <option value="20">20px</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Caret Style</span>
+                <span class="setting-desc">Visual shape of the active typing cursor</span>
+              </div>
+              <select id="setting-caret-style" class="select-control">
+                <option value="line" selected>Vertical Line (Smooth pulse)</option>
+                <option value="block">Block Caret (Terminal style)</option>
+                <option value="underline">Underline</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Indentation Tab Size</span>
+                <span class="setting-desc">Number of spaces to advance on Tab</span>
+              </div>
+              <select id="setting-tab-size" class="select-control">
+                <option value="2" selected>2 Spaces</option>
+                <option value="4">4 Spaces</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Smart Auto-Indent</span>
+                <span class="setting-desc">Automatically advance through leading indent on Enter</span>
+              </div>
+              <label class="switch-label">
+                <input type="checkbox" id="setting-auto-indent" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Mechanical Audio Clicks</span>
+                <span class="setting-desc">Synthesized tactile keyboard sounds (Web Audio API)</span>
+              </div>
+              <label class="switch-label">
+                <input type="checkbox" id="setting-sound">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary modal-close-trigger">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Progress History Modal -->
+  <div class="modal-overlay hidden" id="progress-modal" role="dialog" aria-modal="true" aria-labelledby="progress-heading">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="progress-heading">Typing Telemetry &amp; History</h3>
+        <button class="modal-close-btn modal-close-trigger" aria-label="Close telemetry">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Summary Cards -->
+        <div class="progress-summary-cards">
+          <div class="progress-summary-card">
+            <div class="stat-label">Challenges Completed</div>
+            <div class="progress-sum-val" id="progress-total-challenges">0</div>
+          </div>
+          <div class="progress-summary-card">
+            <div class="stat-label">Total Practice Time</div>
+            <div class="progress-sum-val" id="progress-total-time">0m 0s</div>
+          </div>
+          <div class="progress-summary-card">
+            <div class="stat-label">Avg. Accuracy</div>
+            <div class="progress-sum-val" id="progress-avg-accuracy" style="color:var(--accent-emerald);">100%</div>
+          </div>
+        </div>
+
+        <div class="stat-label" style="margin-bottom: 10px;">Personal Records by Language</div>
+        <div class="progress-best-grid" id="progress-best-languages">
+          <!-- Populated from storage.js -->
+        </div>
+
+        <div class="stat-label" style="margin-bottom: 10px;">Recent Practice Sessions</div>
+        <div class="sessions-table-wrapper">
+          <table class="sessions-table">
+            <thead>
+              <tr>
+                <th>Snippet</th>
+                <th>Lang</th>
+                <th>WPM</th>
+                <th>Acc</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="progress-sessions-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-actions" style="justify-content: space-between;">
+          <button type="button" class="btn-secondary" id="progress-clear-btn" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3);">
+            Clear History
+          </button>
+          <button type="button" class="btn-primary modal-close-trigger">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
+

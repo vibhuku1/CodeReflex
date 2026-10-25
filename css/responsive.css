@@ -1,0 +1,119 @@
+/**
+ * CodeReflex - Responsive Layout Media Queries
+ * Adaptations for tablets, mobile viewports, and compact view states.
+ */
+
+@media (max-width: 1024px) {
+  .editor-pane {
+    flex: 0 0 50%;
+  }
+
+  .stats-metrics-group {
+    gap: 16px;
+  }
+
+  .stats-progress-group {
+    width: 180px;
+  }
+}
+
+@media (max-width: 840px) {
+  html, body {
+    overflow-y: auto;
+  }
+
+  .app-container {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-header {
+    height: auto;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-center {
+    width: 100%;
+    order: 3;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .header-right {
+    width: 100%;
+    order: 2;
+    justify-content: space-between;
+  }
+
+  .stats-ribbon {
+    height: auto;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .stats-progress-group {
+    width: 100%;
+  }
+
+  .workspace-split-view {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .editor-pane {
+    flex: none;
+    width: 100%;
+    min-height: 380px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .split-resizer {
+    display: none;
+  }
+
+  .preview-pane {
+    flex: none;
+    width: 100%;
+    min-height: 420px;
+  }
+
+  .results-secondary-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-tab span:not(.preview-tab-indicator) {
+    font-size: 11px;
+  }
+
+  .stat-item:nth-child(n+4) {
+    display: none; /* Hide less critical stats on tiny screens */
+  }
+
+  .modal-card {
+    border-radius: var(--radius-md);
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+}
+

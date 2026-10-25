@@ -1,0 +1,275 @@
+/**
+ * CodeReflex - Code Editor Styling
+ * Monospace typography, character states, caret styles, and line gutter.
+ */
+
+.editor-header {
+  height: 42px;
+  min-height: 42px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.editor-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.editor-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-red { background-color: #ef4444; }
+.dot-yellow { background-color: #f59e0b; }
+.dot-green { background-color: #10b981; }
+
+.editor-filename {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-tool-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition-fast);
+}
+
+.editor-tool-btn:hover {
+  background-color: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+/* Scroll Area & Lines Wrapper */
+.editor-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  outline: none;
+  background-color: var(--bg-surface);
+  padding: 20px 0;
+  cursor: text;
+}
+
+.editor-scroll-area:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent-cyan);
+}
+
+.editor-code-container {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: 16px; /* Configurable via settings */
+  line-height: 1.7;
+  letter-spacing: 0;
+  white-space: pre;
+  tab-size: 2;
+  min-width: fit-content;
+}
+
+/* Individual Line */
+.editor-line {
+  display: flex;
+  align-items: baseline;
+  min-height: 1.7em;
+  padding: 0 16px;
+  transition: background-color var(--transition-fast);
+}
+
+.editor-line:hover {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+/* Line Number Gutter */
+.editor-gutter {
+  user-select: none;
+  width: 44px;
+  min-width: 44px;
+  text-align: right;
+  padding-right: 18px;
+  color: var(--text-ghost);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+/* Line Code Content */
+.editor-line-content {
+  flex: 1;
+  display: inline-flex;
+  flex-wrap: nowrap;
+}
+
+/* Character Spans */
+.code-char {
+  position: relative;
+  display: inline-block;
+  min-width: 0.6em; /* Monospace character grid stability */
+  transition: color 0.08s ease, background-color 0.08s ease;
+}
+
+/* 1. Upcoming / Pending Characters (Ghost Text) */
+.char-pending {
+  color: #475569; /* Soft muted ghost text */
+}
+
+/* 2. Successfully Typed Characters */
+.char-correct {
+  color: #f1f5f9; /* Bright crisp text */
+}
+
+/* 3. Mistakes / Typo Characters */
+.char-incorrect {
+  color: #f43f5e !important;
+  background-color: rgba(244, 63, 94, 0.22);
+  border-radius: 2px;
+  text-decoration: underline wavy #f43f5e;
+}
+
+/* Whitespace markers */
+.char-space {
+  min-width: 0.6em;
+}
+
+.char-tab {
+  min-width: 1.2em;
+}
+
+.char-newline {
+  min-width: 1em;
+}
+
+.newline-glyph {
+  font-size: 0.8em;
+  opacity: 0.35;
+  margin-left: 2px;
+  user-select: none;
+}
+
+.char-correct .newline-glyph {
+  opacity: 0.15;
+  color: var(--text-muted);
+}
+
+.char-current .newline-glyph {
+  opacity: 0.8;
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   Cursor / Caret Rendering & Animations
+   ========================================================================== */
+
+.active-cursor {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Default: Line Caret */
+.caret-line .active-cursor {
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 2px;
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+  animation: cursor-pulse 1s infinite;
+}
+
+/* Block Caret */
+.caret-block .active-cursor {
+  left: 0;
+  top: 10%;
+  width: 100%;
+  height: 80%;
+  background-color: rgba(56, 189, 248, 0.4);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 2px;
+  animation: cursor-pulse 1.2s infinite;
+}
+
+/* Underline Caret */
+.caret-underline .active-cursor {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--accent-cyan);
+  animation: cursor-pulse 1s infinite;
+}
+
+@keyframes cursor-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ==========================================================================
+   Focus Overlay Banner
+   ========================================================================== */
+
+.editor-focus-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(9, 13, 20, 0.75);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.focus-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-medium);
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  animation: bounce-subtle 2s infinite ease-in-out;
+}
+
+.focus-pill svg {
+  color: var(--accent-cyan);
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
