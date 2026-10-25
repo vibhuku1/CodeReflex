@@ -183,5 +183,52 @@ export class StorageManager {
       console.warn('Failed to clear level progress:', err);
     }
   }
+
+  /**
+   * Merges remote Firestore progress into local storage, preserving existing achievements.
+   */
+  static syncCloudProgress(cloudData) {
+    if (!cloudData) return;
+
+    try {
+      // 1. Merge Level Progress
+      if (cloudData.level1) {
+        const local = this.getLevelProgress();
+        const remote = cloudData.level1;
+
+        const mergedUnlocked = Math.max(local.level1.unlockedPart || 1, remote.unlockedPart || 1);
+        const mergedParts = { ...local.level1.parts };
+
+        if (remote.parts) {
+          for (const [partKey, remotePart] of Object.entries(remote.parts)) {
+            const localPart = mergedParts[partKey] || { completed: false, bestWpm: 0, bestAccuracy: 0 };
+            mergedParts[partKey] = {
+              completed: Boolean(localPart.completed || remotePart.completed),
+              bestWpm: Math.max(localPart.bestWpm || 0, remotePart.bestWpm || 0),
+              bestAccuracy: Math.max(localPart.bestAccuracy || 0, remotePart.bestAccuracy || 0)
+            };
+          }
+        }
+
+        local.level1 = {
+          unlockedPart: mergedUnlocked,
+          parts: mergedParts
+        };
+
+        localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(local));
+      }
+
+      // 2. Merge aggregate profile metrics
+      if (cloudData.profile) {
+        const history = this.getHistory();
+        if (cloudData.profile.completedChallenges > history.totalCompletedChallenges) {
+          history.totalCompletedChallenges = cloudData.profile.completedChallenges;
+        }
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
+    } catch (err) {
+      console.warn('Error syncing cloud progress to local storage:', err);
+    }
+  }
 }
 

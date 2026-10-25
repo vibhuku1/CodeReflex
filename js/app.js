@@ -10,7 +10,7 @@ import { PreviewManager } from './preview.js';
 import { StorageManager } from './storage.js';
 import { ModalManager } from './modals.js';
 import { soundPlayer } from './sound.js';
-import { AuthManager } from './auth.js';
+import { AuthManager } from './auth.js?v=1.2';
 
 class CodeReflexApp {
   constructor() {
@@ -452,7 +452,8 @@ class CodeReflexApp {
     }
 
     // Record session in history
-    StorageManager.recordSession({
+    const sessionPayload = {
+      id: 'sess_' + Date.now(),
       challengeId: this.activeChallenge.id,
       title: this.activeChallenge.title,
       language: this.activeChallenge.language,
@@ -462,7 +463,18 @@ class CodeReflexApp {
       accuracy: metrics.accuracy,
       elapsedSeconds: metrics.elapsedSeconds,
       errorCount: metrics.errorCount
-    });
+    };
+    StorageManager.recordSession(sessionPayload);
+
+    // Save to Cloud Firestore if user is authenticated with a Firebase UID
+    const currentUser = this.auth ? this.auth.getAuthenticatedUser() : null;
+    if (currentUser && currentUser.uid) {
+      import('./firebase.js').then(({ saveUserProgress }) => {
+        saveUserProgress(currentUser.uid, sessionPayload, StorageManager.getLevelProgress());
+      }).catch(err => {
+        console.warn('Asynchronous Firestore progress sync notice:', err);
+      });
+    }
 
     // Update preview to 100% finished
     this.preview.update(100, this.engine.targetText);
@@ -521,6 +533,10 @@ class CodeReflexApp {
 }
 
 // Bootstrap once DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.app = new CodeReflexApp();
+  });
+} else {
   window.app = new CodeReflexApp();
-});
+}

@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Deny all by default for unmatched collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User profile document: users/{userId}
+    match /users/{userId} {
+      // Users can only read and write their own profile document
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'displayName', 'email', 'photoURL', 'createdAt', 'lastLoginAt',
+          'bestWpm', 'averageAccuracy', 'completedChallenges',
+          'currentLevel', 'currentPart', 'updatedAt'
+        ])
+        && (request.resource.data.email is string)
+        && (request.resource.data.bestWpm is number && request.resource.data.bestWpm >= 0)
+        && (request.resource.data.averageAccuracy is number && request.resource.data.averageAccuracy >= 0 && request.resource.data.averageAccuracy <= 100);
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'email', 'photoURL', 'lastLoginAt',
+          'bestWpm', 'averageAccuracy', 'completedChallenges',
+          'currentLevel', 'currentPart', 'updatedAt'
+        ])
+        && (request.resource.data.bestWpm is number && request.resource.data.bestWpm >= 0)
+        && (request.resource.data.averageAccuracy is number && request.resource.data.averageAccuracy >= 0 && request.resource.data.averageAccuracy <= 100);
+
+      // Subcollection for detailed session telemetry: users/{userId}/history/{sessionId}
+      match /history/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subcollection for level progress: users/{userId}/progress/{progressId}
+      match /progress/{progressId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+

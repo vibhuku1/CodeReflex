@@ -61,8 +61,8 @@
       </nav>
 
       <div class="landing-auth-cta-group">
-        <button type="button" class="btn-landing-login" id="landing-btn-login">Login</button>
-        <a href="#auth-section" class="btn-landing-primary">Get Started</a>
+        <a href="#login" class="btn-landing-login" id="landing-btn-login" role="button">Login</a>
+        <a href="#login" class="btn-landing-primary" id="landing-btn-get-started" role="button">Get Started</a>
       </div>
     </header>
 
@@ -293,94 +293,6 @@
         </div>
       </section>
 
-      <!-- 6. Developer Authentication Card Section -->
-      <section class="landing-auth-section" id="auth-section">
-        <div class="auth-card">
-          <!-- Auth Tabs: Login vs Sign Up -->
-          <div class="auth-tabs" role="tablist">
-            <button type="button" class="auth-tab active" id="tab-auth-login" role="tab" aria-selected="true">Sign In</button>
-            <button type="button" class="auth-tab" id="tab-auth-signup" role="tab" aria-selected="false">Create Account</button>
-          </div>
-
-          <!-- Prototype Mode Disclaimer -->
-          <div class="auth-prototype-disclaimer">
-            <strong>Prototype Mode:</strong> Client-side demo session. Real OAuth &amp; backend credentials integration connects in a future release. Plaintext passwords are never saved.
-          </div>
-
-          <!-- Form 1: Sign In -->
-          <form id="form-login" novalidate>
-            <div class="auth-form-group">
-              <label for="login-email" class="auth-label">Email Address</label>
-              <div class="auth-input-wrapper">
-                <input type="email" id="login-email" class="auth-input" placeholder="developer@company.com" autocomplete="email">
-              </div>
-              <div class="auth-inline-error" id="login-email-error"></div>
-            </div>
-
-            <div class="auth-form-group">
-              <label for="login-password" class="auth-label">Password (min 8 characters)</label>
-              <div class="auth-input-wrapper">
-                <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
-                <button type="button" class="auth-toggle-pwd" data-target-input="login-password" aria-label="Toggle password visibility">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="auth-inline-error" id="login-password-error"></div>
-            </div>
-
-            <button type="submit" class="btn-auth-submit" id="btn-login-submit">Sign In to Dashboard</button>
-          </form>
-
-          <!-- Form 2: Sign Up (Initially Hidden) -->
-          <form id="form-signup" class="hidden" novalidate>
-            <div class="auth-form-group">
-              <label for="signup-name" class="auth-label">Developer Name</label>
-              <div class="auth-input-wrapper">
-                <input type="text" id="signup-name" class="auth-input" placeholder="Alex Rivera" autocomplete="name">
-              </div>
-              <div class="auth-inline-error" id="signup-name-error"></div>
-            </div>
-
-            <div class="auth-form-group">
-              <label for="signup-email" class="auth-label">Email Address</label>
-              <div class="auth-input-wrapper">
-                <input type="email" id="signup-email" class="auth-input" placeholder="developer@company.com" autocomplete="email">
-              </div>
-              <div class="auth-inline-error" id="signup-email-error"></div>
-            </div>
-
-            <div class="auth-form-group">
-              <label for="signup-password" class="auth-label">Password (min 8 characters)</label>
-              <div class="auth-input-wrapper">
-                <input type="password" id="signup-password" class="auth-input" placeholder="••••••••" autocomplete="new-password">
-                <button type="button" class="auth-toggle-pwd" data-target-input="signup-password" aria-label="Toggle password visibility">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="auth-inline-error" id="signup-password-error"></div>
-            </div>
-
-            <div class="auth-form-group">
-              <label for="signup-confirm-password" class="auth-label">Confirm Password</label>
-              <div class="auth-input-wrapper">
-                <input type="password" id="signup-confirm-password" class="auth-input" placeholder="••••••••" autocomplete="new-password">
-                <button type="button" class="auth-toggle-pwd" data-target-input="signup-confirm-password" aria-label="Toggle password visibility">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="auth-inline-error" id="signup-confirm-password-error"></div>
-            </div>
-
-            <button type="submit" class="btn-auth-submit" id="btn-signup-submit">Create Prototype Account</button>
-          </form>
-        </div>
-      </section>
     </main>
 
     <!-- Landing Footer -->
@@ -388,6 +300,148 @@
       <div>CodeReflex &bull; Engineered for developers building muscle memory.</div>
       <div>Prototype v0.1 &bull; Vanilla JS &amp; CSS</div>
     </footer>
+  </div>
+
+  <!-- ==========================================================================
+       VIEW 2: DEDICATED LOGIN PAGE (Matches Reference Visual Design)
+       ========================================================================== -->
+  <div class="login-page-view hidden" id="login-view">
+    <!-- Top Bar with Back Navigation -->
+    <header class="login-page-header">
+      <button type="button" class="btn-login-back" id="btn-login-back" title="Return to Landing Page">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to CodeReflex</span>
+      </button>
+      <div class="brand-wrapper" title="CodeReflex">
+        <div class="brand-symbol">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span class="brand-text">CodeReflex</span>
+      </div>
+    </header>
+
+    <!-- Centered Login Box (Two Columns matching the reference) -->
+    <div class="login-container">
+      <div class="login-card">
+        <!-- Left Column: Illustration -->
+        <div class="login-visual-pane">
+          <div class="login-visual-frame">
+            <img src="assets/login-illustration.png" alt="Developer practice illustration" class="login-illustration-img">
+          </div>
+        </div>
+
+        <!-- Right Column: Login Form -->
+        <div class="login-form-pane">
+          <div class="login-header-group">
+            <h1 class="login-title">Login</h1>
+            <div class="login-mode-tabs" role="tablist">
+              <button type="button" class="login-mode-tab active" id="tab-auth-login" role="tab" aria-selected="true">Sign In</button>
+              <button type="button" class="login-mode-tab" id="tab-auth-signup" role="tab" aria-selected="false">Create Account</button>
+            </div>
+            <div class="login-title-bar"></div>
+          </div>
+
+          <!-- Status / Alert Banner -->
+          <div class="auth-status-banner hidden" id="login-status-banner"></div>
+
+          <form id="form-dedicated-login" novalidate>
+            <!-- Full Name Field (Displayed in Create Account mode) -->
+            <div class="login-field-group hidden" id="login-name-group">
+              <label for="login-name-input" class="login-field-label">Full Name</label>
+              <div class="login-input-box">
+                <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <input type="text" id="login-name-input" class="login-field-input" placeholder="Enter your full name" autocomplete="name">
+              </div>
+              <div class="login-inline-error" id="login-name-err"></div>
+            </div>
+
+            <!-- Email Field -->
+            <div class="login-field-group">
+              <label for="login-email-input" class="login-field-label">Email</label>
+              <div class="login-input-box">
+                <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <input type="email" id="login-email-input" class="login-field-input" placeholder="Enter your email" autocomplete="email" required>
+              </div>
+              <div class="login-inline-error" id="login-email-err"></div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="login-field-group">
+              <label for="login-password-input" class="login-field-label">Password</label>
+              <div class="login-input-box">
+                <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" id="login-password-input" class="login-field-input" placeholder="Enter your password" autocomplete="current-password" required>
+                <button type="button" class="login-pwd-toggle" id="btn-toggle-login-pwd" aria-label="Toggle password visibility">
+                  <svg class="icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="login-inline-error" id="login-password-err"></div>
+            </div>
+
+            <!-- Forgot Password Link -->
+            <div class="login-forgot-row" id="login-forgot-row">
+              <button type="button" class="login-forgot-link" id="link-forgot-password">Forgot password?</button>
+            </div>
+
+            <!-- Red Log In / Create Account Button -->
+            <button type="submit" class="btn-dedicated-login" id="btn-submit-login">Log in</button>
+
+            <!-- Bottom Mode Switcher -->
+            <div class="auth-switch-row" id="auth-switch-row">
+              <span id="auth-switch-prompt">Don't have an account?</span>
+              <button type="button" class="btn-auth-switch" id="btn-auth-mode-switch">Create account</button>
+            </div>
+
+            <!-- Divider -->
+            <div class="login-divider">
+              <span>or continue with</span>
+            </div>
+
+            <!-- Circular Social Buttons: Google, Facebook, Apple -->
+            <div class="social-buttons-row">
+              <button type="button" class="btn-social-circle btn-google" id="btn-social-google" title="Continue with Google" aria-label="Continue with Google">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span class="sr-only">Continue with Google</span>
+              </button>
+
+              <button type="button" class="btn-social-circle btn-facebook" id="btn-social-facebook" title="Continue with Facebook">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#1877F2" aria-hidden="true">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </button>
+
+              <button type="button" class="btn-social-circle btn-apple" id="btn-social-apple" title="Continue with Apple">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#ffffff" aria-hidden="true">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.4c.66-.82 1.11-1.96.99-3.1-.96.04-2.12.64-2.8 1.44-.6.69-1.13 1.83-.99 2.93 1.07.08 2.15-.55 2.8-1.27z"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ==========================================================================
@@ -490,7 +544,8 @@
 
         <!-- Authenticated User Profile Pill & Logout Button -->
         <div class="header-user-badge" id="header-user-badge" title="Authenticated Profile">
-          <span class="header-user-dot"></span>
+          <img id="header-user-avatar" class="header-user-avatar hidden" alt="" referrerpolicy="no-referrer">
+          <span class="header-user-dot" id="header-user-dot"></span>
           <span id="header-user-email">dev@codereflex.io</span>
         </div>
         <button class="header-btn btn-logout" id="header-logout-btn" title="Sign out of CodeReflex">
@@ -760,6 +815,29 @@
   </div>
 
   <!-- Scripts -->
-  <script type="module" src="js/app.js"></script>
+  <script>
+    // Instant hash navigation fallback for immediate responsive UI
+    (function() {
+      function syncHashView() {
+        if (window.location.hash === '#login') {
+          var landing = document.getElementById('landing-view');
+          var login = document.getElementById('login-view');
+          if (landing && login) {
+            landing.classList.add('hidden');
+            login.classList.remove('hidden');
+          }
+        }
+      }
+      window.addEventListener('hashchange', syncHashView);
+      if (window.location.hash === '#login') {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', syncHashView);
+        } else {
+          syncHashView();
+        }
+      }
+    })();
+  </script>
+  <script type="module" src="js/app.js?v=1.2"></script>
 </body>
 </html>
