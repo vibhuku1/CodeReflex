@@ -72,21 +72,25 @@ export class ModalManager {
           levelTargetEl.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
           levelTargetEl.style.color = '#34d399';
           levelTargetEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-          const nextText = challenge.part < 3 ? `Part ${challenge.part} passed with ${metrics.accuracy}% accuracy! Part ${challenge.part + 1} is now unlocked.` : `Level 1 Mastered! All 3 parts completed with ${metrics.accuracy}% accuracy!`;
+          const nextText = levelMeta.isProgressionV2
+            ? `Challenge #${challenge.challengeIndex || 1} passed with ${metrics.accuracy}% accuracy! Slot progress recorded.`
+            : (challenge.part < 3 ? `Part ${challenge.part} passed with ${metrics.accuracy}% accuracy! Part ${challenge.part + 1} is now unlocked.` : `Level 1 Mastered! All 3 parts completed with ${metrics.accuracy}% accuracy!`);
           levelTargetEl.innerHTML = `<strong>✓ Target Met (≥ 95% Accuracy):</strong> ${nextText}`;
         } else {
           levelTargetEl.style.backgroundColor = 'rgba(244, 63, 94, 0.15)';
           levelTargetEl.style.color = '#f87171';
           levelTargetEl.style.border = '1px solid rgba(244, 63, 94, 0.3)';
-          levelTargetEl.innerHTML = `<strong>⚠ Accuracy Target: 95% Required (Achieved: ${metrics.accuracy}%):</strong> Part ${challenge.part < 3 ? challenge.part + 1 : challenge.part} remains locked until you achieve at least 95% accuracy. Retry to unlock!`;
+          levelTargetEl.innerHTML = `<strong>⚠ Accuracy Target: 95% Required (Achieved: ${metrics.accuracy}%):</strong> Requires at least 95% accuracy to pass and unlock subsequent levels. Retry to master!`;
         }
       }
 
       if (nextBtnSpan) {
         if (levelMeta.passedTarget) {
-          nextBtnSpan.textContent = challenge.part < 3 ? `Continue to Part ${challenge.part + 1}` : 'Level 1 Complete!';
+          nextBtnSpan.textContent = levelMeta.isProgressionV2
+            ? 'Continue Next Challenge'
+            : (challenge.part < 3 ? `Continue to Part ${challenge.part + 1}` : 'Level 1 Complete!');
         } else {
-          nextBtnSpan.textContent = 'Retry Part (Need 95%)';
+          nextBtnSpan.textContent = 'Retry (Need 95%)';
         }
       }
     } else {

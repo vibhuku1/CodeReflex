@@ -53,6 +53,10 @@ export async function getFirebaseServices() {
       authInstance = authMod.getAuth(appInstance);
       dbInstance = firestoreMod.getFirestore(appInstance);
 
+      if (authMod.browserSessionPersistence && authMod.setPersistence) {
+        await authMod.setPersistence(authInstance, authMod.browserSessionPersistence).catch(() => {});
+      }
+
       googleProviderInstance = new authMod.GoogleAuthProvider();
       googleProviderInstance.setCustomParameters({ prompt: 'select_account' });
 
@@ -106,8 +110,10 @@ export async function signInWithGoogle() {
     const result = await modules.signInWithPopup(auth, googleProvider);
     const user = result.user;
 
-    // Create or sync user profile document in Firestore
-    const profile = await syncUserProfile(user);
+    // Create or sync user profile document in Firestore asynchronously without blocking return
+    syncUserProfile(user).catch(profileErr => {
+      console.warn('Background Firestore profile sync notice:', profileErr);
+    });
 
     return {
       success: true,
@@ -116,22 +122,22 @@ export async function signInWithGoogle() {
         displayName: user.displayName || user.email.split('@')[0],
         email: user.email,
         photoURL: user.photoURL || null
-      },
-      profile
+      }
     };
   } catch (err) {
-    console.warn('Google Sign-In error:', err.code, err.message);
+    console.warn('[CodeReflex Auth] Google Sign-In error code:', err.code, 'message:', err.message);
 
     // Map common Firebase auth error codes to actionable messages
     let friendlyMessage = 'Authentication failed. Please try again.';
     if (err.code === 'auth/popup-closed-by-user') {
-      friendlyMessage = 'Sign-in cancelled. The Google popup was closed.';
+      friendlyMessage = 'Google sign-in popup was closed before completing.';
     } else if (err.code === 'auth/cancelled-popup-request') {
       friendlyMessage = 'Previous sign-in attempt was cancelled.';
     } else if (err.code === 'auth/popup-blocked') {
-      friendlyMessage = 'Popup was blocked by your browser. Please allow popups for this site.';
+      friendlyMessage = 'Popup was blocked by your browser. Please allow popups or use Redirect Sign-In.';
     } else if (err.code === 'auth/unauthorized-domain') {
-      friendlyMessage = 'This domain is not authorized in Firebase Console > Authentication > Settings > Authorized Domains.';
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'current domain';
+      friendlyMessage = `This domain (${host}) is not authorized in Firebase Console > Authentication > Settings > Authorized Domains.`;
     } else if (err.code === 'auth/network-request-failed') {
       friendlyMessage = 'Network error. Please check your internet connection and try again.';
     } else if (err.message) {
@@ -141,9 +147,90 @@ export async function signInWithGoogle() {
     return {
       success: false,
       code: err.code || 'unknown',
-      message: friendlyMessage
+      message: friendlyMessage,
+      rawError: err
     };
   }
+}
+
+/**
+ * Initiates Google Sign-In with browser redirect (fallback when popup is blocked).
+ */
+export async function signInWithGoogleRedirect() {
+  if (!isFirebaseConfigured()) {
+    return {
+      success: false,
+      code: 'unconfigured',
+      message: 'Firebase configuration required. Please enter your credentials in js/firebase-config.js.'
+    };
+  }
+
+  const services = await getFirebaseServices();
+  if (!services.configured || !services.auth) {
+    return {
+      success: false,
+      code: 'init-failed',
+      message: services.error || 'Failed to initialize Firebase.'
+    };
+  }
+
+  const { auth, googleProvider, modules } = services;
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('codereflex_auth_redirect_active', '1');
+    }
+    await modules.signInWithRedirect(auth, googleProvider);
+    return { success: true };
+  } catch (err) {
+    console.error('[CodeReflex Auth] Google Redirect error:', err.code, err.message);
+    return {
+      success: false,
+      code: err.code || 'unknown',
+      message: err.message
+    };
+  }
+}
+
+/**
+ * Checks for a pending redirect sign-in result on page load.
+ */
+export async function checkRedirectResult() {
+  if (!isFirebaseConfigured()) return null;
+  if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem('codereflex_auth_redirect_active')) {
+    return null;
+  }
+
+  const services = await getFirebaseServices();
+  if (!services.configured || !services.auth || !services.modules || !services.modules.getRedirectResult) {
+    return null;
+  }
+
+  try {
+    const cred = await services.modules.getRedirectResult(services.auth);
+    if (cred && cred.user) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('codereflex_auth_redirect_active');
+      }
+      syncUserProfile(cred.user).catch(() => {});
+      return {
+        success: true,
+        user: {
+          uid: cred.user.uid,
+          displayName: cred.user.displayName || cred.user.email.split('@')[0],
+          email: cred.user.email,
+          photoURL: cred.user.photoURL || null
+        }
+      };
+    }
+  } catch (err) {
+    console.warn('[CodeReflex Auth] Redirect result notice:', err.code, err.message);
+    return {
+      success: false,
+      code: err.code || 'unknown',
+      message: err.message
+    };
+  }
+  return null;
 }
 
 /**
@@ -172,7 +259,11 @@ export async function signInWithEmail(email, password) {
   try {
     const cred = await modules.signInWithEmailAndPassword(auth, email, password);
     const user = cred.user;
-    const profile = await syncUserProfile(user);
+
+    // Sync profile in background without blocking authentication return
+    syncUserProfile(user).catch(profileErr => {
+      console.warn('Background Firestore profile sync notice:', profileErr);
+    });
 
     return {
       success: true,
@@ -181,8 +272,7 @@ export async function signInWithEmail(email, password) {
         displayName: user.displayName || user.email.split('@')[0],
         email: user.email,
         photoURL: user.photoURL || null
-      },
-      profile
+      }
     };
   } catch (err) {
     console.warn('Email sign-in error:', err.code, err.message);
@@ -237,19 +327,21 @@ export async function signUpWithEmail(email, password, displayName = '') {
 
     const trimmedName = (displayName || '').trim();
     if (trimmedName && modules.updateProfile) {
-      try {
-        await modules.updateProfile(user, { displayName: trimmedName });
-      } catch (profileErr) {
+      modules.updateProfile(user, { displayName: trimmedName }).catch(profileErr => {
         console.warn('Could not update display name on user:', profileErr);
-      }
+      });
     }
 
     const effectiveName = trimmedName || user.displayName || email.split('@')[0];
-    const profile = await syncUserProfile({
+
+    // Sync profile in background without blocking authentication return
+    syncUserProfile({
       uid: user.uid,
       displayName: effectiveName,
       email: user.email,
       photoURL: user.photoURL || null
+    }).catch(profileErr => {
+      console.warn('Background Firestore profile sync notice:', profileErr);
     });
 
     return {
@@ -259,8 +351,7 @@ export async function signUpWithEmail(email, password, displayName = '') {
         displayName: effectiveName,
         email: user.email,
         photoURL: user.photoURL || null
-      },
-      profile
+      }
     };
   } catch (err) {
     console.warn('Email sign-up error:', err.code, err.message);
@@ -486,8 +577,19 @@ export async function syncUserProfile(user) {
   const userRef = modules.doc(db, 'users', user.uid);
 
   try {
-    const docSnap = await modules.getDoc(userRef);
-    const isNew = !docSnap.exists();
+    const fetchWithTimeout = new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), 1500);
+      modules.getDoc(userRef).then(snap => {
+        clearTimeout(timer);
+        resolve(snap);
+      }).catch(() => {
+        clearTimeout(timer);
+        resolve(null);
+      });
+    });
+
+    const docSnap = await fetchWithTimeout;
+    const isNew = !docSnap || !docSnap.exists();
     const existingData = isNew ? {} : docSnap.data();
 
     const profileData = {
@@ -508,7 +610,10 @@ export async function syncUserProfile(user) {
       profileData.createdAt = modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString();
     }
 
-    await modules.setDoc(userRef, profileData, { merge: true });
+    modules.setDoc(userRef, profileData, { merge: true }).catch(err => {
+      console.warn('Background Firestore profile save notice:', err.message);
+    });
+
     return { ...existingData, ...profileData };
   } catch (err) {
     console.warn('Firestore profile sync error (offline or permission):', err);
@@ -519,7 +624,7 @@ export async function syncUserProfile(user) {
 /**
  * Saves a completed challenge session and updated level telemetry to Firestore.
  */
-export async function saveUserProgress(uid, sessionData, levelProgress) {
+export async function saveUserProgress(uid, sessionData, levelProgress, progressionV2 = null) {
   if (!uid || !isFirebaseConfigured()) return;
 
   const services = await getFirebaseServices();
@@ -530,8 +635,19 @@ export async function saveUserProgress(uid, sessionData, levelProgress) {
 
   try {
     // 1. Fetch current metrics to compute incremental aggregates
-    const docSnap = await modules.getDoc(userRef);
-    const currentData = docSnap.exists() ? docSnap.data() : {};
+    const fetchWithTimeout = new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), 1500);
+      modules.getDoc(userRef).then(snap => {
+        clearTimeout(timer);
+        resolve(snap);
+      }).catch(() => {
+        clearTimeout(timer);
+        resolve(null);
+      });
+    });
+
+    const docSnap = await fetchWithTimeout;
+    const currentData = (docSnap && docSnap.exists()) ? docSnap.data() : {};
 
     const prevBestWpm = currentData.bestWpm || 0;
     const newBestWpm = Math.max(prevBestWpm, sessionData.wpm || 0);
@@ -547,18 +663,18 @@ export async function saveUserProgress(uid, sessionData, levelProgress) {
       : (currentData.currentPart || 1);
 
     // Update parent user profile document
-    await modules.setDoc(userRef, {
+    modules.setDoc(userRef, {
       bestWpm: newBestWpm,
       averageAccuracy: newAvgAcc,
       completedChallenges: newCompleted,
       currentLevel: 1,
       currentPart: unlockedPart,
       updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-    }, { merge: true });
+    }, { merge: true }).catch(() => {});
 
     // 2. Write to subcollection: users/{uid}/history/{sessionId}
     const sessionRef = modules.doc(db, 'users', uid, 'history', sessionData.id || `sess_${Date.now()}`);
-    await modules.setDoc(sessionRef, {
+    modules.setDoc(sessionRef, {
       challengeId: sessionData.challengeId,
       title: sessionData.title,
       language: sessionData.language,
@@ -569,16 +685,26 @@ export async function saveUserProgress(uid, sessionData, levelProgress) {
       elapsedSeconds: sessionData.elapsedSeconds,
       errorCount: sessionData.errorCount,
       completedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-    });
+    }).catch(() => {});
 
     // 3. Write to subcollection: users/{uid}/progress/level1
     if (levelProgress && levelProgress.level1) {
       const levelRef = modules.doc(db, 'users', uid, 'progress', 'level1');
-      await modules.setDoc(levelRef, {
+      modules.setDoc(levelRef, {
         unlockedPart: levelProgress.level1.unlockedPart || 1,
         parts: levelProgress.level1.parts || {},
         updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-      }, { merge: true });
+      }, { merge: true }).catch(() => {});
+    }
+
+    // 4. Write to subcollection: users/{uid}/progression/v2 (Multi-language 70-level progress)
+    if (progressionV2 && progressionV2.languages) {
+      const progRef = modules.doc(db, 'users', uid, 'progression', 'v2');
+      modules.setDoc(progRef, {
+        version: 2,
+        languages: progressionV2.languages,
+        updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
+      }, { merge: true }).catch(() => {});
     }
   } catch (err) {
     console.warn('Failed to save user progress to Firestore (offline/permission):', err);
@@ -586,7 +712,7 @@ export async function saveUserProgress(uid, sessionData, levelProgress) {
 }
 
 /**
- * Loads user profile and level progress from Firestore.
+ * Loads user profile, level progress, and multi-language progression from Firestore.
  */
 export async function loadUserProgress(uid) {
   if (!uid || !isFirebaseConfigured()) return null;
@@ -599,15 +725,32 @@ export async function loadUserProgress(uid) {
   try {
     const userRef = modules.doc(db, 'users', uid);
     const levelRef = modules.doc(db, 'users', uid, 'progress', 'level1');
+    const progRef = modules.doc(db, 'users', uid, 'progression', 'v2');
 
-    const [userSnap, levelSnap] = await Promise.all([
-      modules.getDoc(userRef),
-      modules.getDoc(levelRef)
-    ]);
+    const fetchWithTimeout = new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), 1500);
+      Promise.all([
+        modules.getDoc(userRef),
+        modules.getDoc(levelRef),
+        modules.getDoc(progRef)
+      ]).then(snaps => {
+        clearTimeout(timer);
+        resolve(snaps);
+      }).catch(() => {
+        clearTimeout(timer);
+        resolve(null);
+      });
+    });
+
+    const snaps = await fetchWithTimeout;
+    if (!snaps) return null;
+
+    const [userSnap, levelSnap, progSnap] = snaps;
 
     return {
-      profile: userSnap.exists() ? userSnap.data() : null,
-      level1: levelSnap.exists() ? levelSnap.data() : null
+      profile: userSnap && userSnap.exists() ? userSnap.data() : null,
+      level1: levelSnap && levelSnap.exists() ? levelSnap.data() : null,
+      progression: progSnap && progSnap.exists() ? progSnap.data() : null
     };
   } catch (err) {
     console.warn('Failed to load user progress from Firestore:', err);

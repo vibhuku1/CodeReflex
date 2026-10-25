@@ -10,14 +10,17 @@ import { PreviewManager } from './preview.js';
 import { StorageManager } from './storage.js';
 import { ModalManager } from './modals.js';
 import { soundPlayer } from './sound.js';
-import { AuthManager } from './auth.js?v=1.2';
+import { AuthManager } from './auth.js?v=1.6';
+import { LevelController } from './level-controller.js';
+import { loadLevelChallenges } from './challenge-loader.js';
+import { DashboardController } from './dashboard.js';
 
 class CodeReflexApp {
   constructor() {
     this.settings = StorageManager.getSettings();
     soundPlayer.enabled = this.settings.soundEnabled;
 
-    this.currentMode = 'code'; // 'normal' | 'code' | 'build'
+    this.currentMode = 'code'; // 'normal' | 'code' | 'build' | 'levels' | 'level1'
     this.currentLanguage = 'javascript'; // 'javascript' | 'python' | 'html' | 'css' | 'text'
     this.currentDifficulty = 'all';
     this.activeChallenge = null;
@@ -42,8 +45,19 @@ class CodeReflexApp {
       progressBtn: document.querySelector('#header-progress-btn'),
       settingsBtn: document.querySelector('#header-settings-btn'),
       headerStandardControls: document.querySelector('#header-standard-controls'),
+      headerLevelsControls: document.querySelector('#header-levels-controls'),
+      headerLevelTrackSelect: document.querySelector('#header-level-lang-select'),
+      btnBrowseLevels: document.querySelector('#btn-browse-levels'),
+      headerLevelsStatusLabel: document.querySelector('#header-levels-status-label'),
       levelStepper: document.querySelector('#level-parts-stepper'),
       levelPartBtns: document.querySelectorAll('.level-part-btn'),
+
+      // Minimal Practice Portal Header Controls
+      btnBackToDashboard: document.querySelector('#btn-back-to-dashboard'),
+      practiceLangPill: document.querySelector('#practice-current-lang-pill'),
+      practiceChallengeInfo: document.querySelector('#practice-current-challenge-info'),
+      practiceBrowseLevelsBtn: document.querySelector('#btn-practice-browse-levels'),
+      practiceRestartBtn: document.querySelector('#practice-restart-btn'),
 
       // Live Stats
       statWpm: document.querySelector('#stat-wpm-value'),
@@ -113,11 +127,81 @@ class CodeReflexApp {
       getHistory: () => StorageManager.getHistory(),
       getSettings: () => this.settings
     });
+
+    // 5. 70-Levels Progression Controller
+    this.levelController = new LevelController({
+      onChallengeSelect: (challenge) => {
+        this.loadProgressionChallenge(challenge);
+      }
+    });
+
+    // 6. Dedicated Visual Dashboard Controller
+    this.dashboard = new DashboardController({
+      onStartPractice: (target) => {
+        if (target.challengeId) {
+          if (target.challengeId.startsWith('ch-')) {
+            const parts = target.challengeId.split('-');
+            const lang = parts[1] || 'html';
+            const lvlMatch = parts[2] ? parts[2].match(/\d+/) : null;
+            const lvl = lvlMatch ? parseInt(lvlMatch[0], 10) : 1;
+            loadLevelChallenges(lang, lvl).then(lvlData => {
+              const matched = lvlData.challenges.find(c => c.id === target.challengeId);
+              if (matched) {
+                this.loadProgressionChallenge(matched);
+              } else {
+                this.loadChallenge(target.challengeId);
+              }
+            }).catch(() => {
+              this.loadChallenge(target.challengeId);
+            });
+          } else {
+            this.loadChallenge(target.challengeId);
+          }
+        } else if (target.language) {
+          const track = target.language;
+          const level = target.level || 1;
+          this.currentLanguage = track;
+          this.currentMode = 'levels';
+          if (this.levelController) {
+            this.levelController.switchTrack(track);
+          }
+          loadLevelChallenges(track, level).then(lvlData => {
+            const firstSlot = lvlData.challenges[0];
+            if (firstSlot) {
+              this.loadProgressionChallenge(firstSlot);
+            }
+          }).catch(() => {
+            this.populateChallengeList();
+            this.loadFirstAvailableChallenge();
+          });
+        }
+        this.auth.showPracticePortal();
+        setTimeout(() => this.editor.focus(), 80);
+      },
+      onOpenCurriculum: (track) => {
+        const lang = track || this.currentLanguage || 'html';
+        this.levelController.openModal(lang);
+      },
+      onOpenSettings: () => {
+        this.modals.showSettings(this.settings);
+      },
+      onLogout: () => {
+        this.auth.handleLogout();
+      }
+    });
   }
 
   initAuth() {
     this.auth = new AuthManager({
+      onDashboardOpen: (user) => {
+        if (this.dashboard) {
+          this.dashboard.render(user);
+        }
+      },
       onLoginSuccess: (user) => {
+        if (this.dashboard) {
+          this.dashboard.render(user);
+        }
         this.restartCurrentChallenge();
         setTimeout(() => this.editor.focus(), 120);
       },
@@ -161,14 +245,38 @@ class CodeReflexApp {
       });
     }
 
-    // Header buttons
-    this.dom.progressBtn.addEventListener('click', () => {
-      this.modals.showProgress();
-    });
+    // Practice Portal Header controls
+    if (this.dom.btnBackToDashboard) {
+      this.dom.btnBackToDashboard.addEventListener('click', () => {
+        this.auth.showDashboard();
+      });
+    }
 
-    this.dom.settingsBtn.addEventListener('click', () => {
-      this.modals.showSettings(this.settings);
-    });
+    if (this.dom.practiceBrowseLevelsBtn) {
+      this.dom.practiceBrowseLevelsBtn.addEventListener('click', () => {
+        const track = ['html', 'css', 'javascript'].includes(this.currentLanguage) ? this.currentLanguage : 'html';
+        this.levelController.openModal(track);
+      });
+    }
+
+    if (this.dom.practiceRestartBtn) {
+      this.dom.practiceRestartBtn.addEventListener('click', () => {
+        this.restartCurrentChallenge();
+      });
+    }
+
+    // Header buttons (legacy/modal triggers)
+    if (this.dom.progressBtn) {
+      this.dom.progressBtn.addEventListener('click', () => {
+        this.modals.showProgress();
+      });
+    }
+
+    if (this.dom.settingsBtn) {
+      this.dom.settingsBtn.addEventListener('click', () => {
+        this.modals.showSettings(this.settings);
+      });
+    }
 
     // Global keyboard shortcuts and auto-focus capture
     window.addEventListener('keydown', (e) => {
@@ -219,12 +327,24 @@ class CodeReflexApp {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
 
-    if (mode === 'level1') {
+    if (mode === 'levels') {
       if (this.dom.headerStandardControls) this.dom.headerStandardControls.classList.add('hidden');
+      if (this.dom.levelStepper) this.dom.levelStepper.classList.add('hidden');
+      if (this.dom.headerLevelsControls) this.dom.headerLevelsControls.classList.remove('hidden');
+
+      const track = ['html', 'css', 'javascript'].includes(this.currentLanguage)
+        ? this.currentLanguage
+        : 'html';
+      this.levelController.switchTrack(track);
+      this.levelController.openModal(track);
+    } else if (mode === 'level1') {
+      if (this.dom.headerStandardControls) this.dom.headerStandardControls.classList.add('hidden');
+      if (this.dom.headerLevelsControls) this.dom.headerLevelsControls.classList.add('hidden');
       if (this.dom.levelStepper) this.dom.levelStepper.classList.remove('hidden');
       this.loadCurrentLevelPart();
     } else {
       if (this.dom.headerStandardControls) this.dom.headerStandardControls.classList.remove('hidden');
+      if (this.dom.headerLevelsControls) this.dom.headerLevelsControls.classList.add('hidden');
       if (this.dom.levelStepper) this.dom.levelStepper.classList.add('hidden');
       this.updateLanguageOptionsForMode(mode);
       this.populateChallengeList();
@@ -383,9 +503,27 @@ class CodeReflexApp {
 
     // Reset stats displays
     this.updateStatsDisplay(this.engine.getMetrics());
+    this.updatePracticeHeaderBadge(challenge);
 
     if (challenge.mode === 'level1') {
       this.updateLevelStepper();
+    }
+  }
+
+  updatePracticeHeaderBadge(challenge) {
+    if (!challenge) return;
+    const lang = challenge.language ? challenge.language.toUpperCase() : 'CODE';
+    if (this.dom.practiceLangPill) {
+      this.dom.practiceLangPill.textContent = lang;
+    }
+    if (this.dom.practiceChallengeInfo) {
+      if (challenge.mode === 'levels' && challenge.level) {
+        this.dom.practiceChallengeInfo.textContent = `Level ${challenge.level} • Challenge ${challenge.challengeIndex || 1}: ${challenge.title || ''}`;
+      } else if (challenge.mode === 'level1') {
+        this.dom.practiceChallengeInfo.textContent = `Level 1 • Part ${challenge.part || 1}: ${challenge.title || ''}`;
+      } else {
+        this.dom.practiceChallengeInfo.textContent = challenge.title || 'Coding Practice';
+      }
     }
   }
 
@@ -398,7 +536,63 @@ class CodeReflexApp {
     this.editor.focus();
   }
 
+  loadProgressionChallenge(challenge) {
+    if (!challenge) return;
+
+    this.activeChallenge = {
+      ...challenge,
+      mode: 'levels'
+    };
+
+    const extMap = {
+      javascript: 'js',
+      python: 'py',
+      html: 'html',
+      css: 'css',
+      text: 'md'
+    };
+    const ext = extMap[challenge.language] || 'txt';
+    const filename = `${challenge.id}.${ext}`;
+    this.editor.setFilename(filename);
+
+    if (challenge.code) {
+      this.engine.loadSnippet(challenge.code);
+      this.editor.renderSnippet(this.engine.targetText);
+      this.preview.setChallenge(challenge);
+      this.updateStatsDisplay(this.engine.getMetrics());
+    }
+
+    this.updatePracticeHeaderBadge(this.activeChallenge);
+
+    if (this.levelController) {
+      this.levelController.updateHeaderStatus();
+    }
+    this.editor.focus();
+  }
+
   goToNextChallenge() {
+    if (this.activeChallenge && this.activeChallenge.mode === 'levels') {
+      const lang = this.activeChallenge.language;
+      const lvl = this.activeChallenge.level;
+      const chIdx = this.activeChallenge.challengeIndex || 1;
+
+      if (chIdx < 30) {
+        loadLevelChallenges(lang, lvl).then(levelData => {
+          const nextSlot = levelData.challenges[chIdx];
+          if (nextSlot && (nextSlot.status === 'ready' || nextSlot.code)) {
+            this.loadProgressionChallenge(nextSlot);
+          } else {
+            this.levelController.openModal(lang, lvl);
+          }
+        }).catch(() => {
+          this.levelController.openModal(lang, lvl);
+        });
+      } else {
+        this.levelController.openModal(lang);
+      }
+      return;
+    }
+
     if (this.activeChallenge && this.activeChallenge.mode === 'level1') {
       const progressData = StorageManager.getLevelProgress();
       const progress = (progressData && progressData.level1) ? progressData.level1 : { unlockedPart: 1, parts: {} };
@@ -437,6 +631,7 @@ class CodeReflexApp {
 
   handleChallengeComplete(metrics) {
     let isLevel = false;
+    let isProgressionV2 = false;
     let passedTarget = false;
 
     if (this.activeChallenge && this.activeChallenge.mode === 'level1') {
@@ -449,6 +644,21 @@ class CodeReflexApp {
         StorageManager.recordLevelPartCompletion('level1', partNum, metrics.wpm, metrics.accuracy);
       }
       this.updateLevelStepper();
+    } else if (this.activeChallenge && this.activeChallenge.mode === 'levels') {
+      isLevel = true;
+      isProgressionV2 = true;
+      const targetAcc = this.activeChallenge.targetAccuracy || 95;
+      passedTarget = (metrics.accuracy >= targetAcc);
+
+      if (passedTarget) {
+        const lang = this.activeChallenge.language || 'html';
+        const lvl = this.activeChallenge.level || 1;
+        const chIdx = this.activeChallenge.challengeIndex || 1;
+        StorageManager.recordChallengeCompletion(lang, lvl, chIdx, metrics.wpm, metrics.accuracy);
+      }
+      if (this.levelController) {
+        this.levelController.updateHeaderStatus();
+      }
     }
 
     // Record session in history
@@ -470,7 +680,7 @@ class CodeReflexApp {
     const currentUser = this.auth ? this.auth.getAuthenticatedUser() : null;
     if (currentUser && currentUser.uid) {
       import('./firebase.js').then(({ saveUserProgress }) => {
-        saveUserProgress(currentUser.uid, sessionPayload, StorageManager.getLevelProgress());
+        saveUserProgress(currentUser.uid, sessionPayload, StorageManager.getProgression());
       }).catch(err => {
         console.warn('Asynchronous Firestore progress sync notice:', err);
       });
@@ -482,6 +692,7 @@ class CodeReflexApp {
     // Trigger celebration modal
     this.modals.showCompletion(metrics, this.activeChallenge, {
       isLevelMode: isLevel,
+      isProgressionV2,
       targetAccuracy: 95,
       passedTarget
     });

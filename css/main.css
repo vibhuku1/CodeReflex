@@ -118,16 +118,37 @@ body.resizing {
   color: var(--text-primary);
 }
 
+.brand-mascot-logo {
+  height: 32px;
+  width: auto;
+  max-width: 40px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
+  transition: transform var(--transition-fast);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.brand-wrapper:hover .brand-mascot-logo {
+  transform: scale(1.08) rotate(-2deg);
+}
+
 .brand-symbol {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .brand-mascot-logo {
+    height: 28px;
+    max-width: 34px;
+  }
 }
 
 .brand-text {

@@ -7,6 +7,8 @@
 
 import {
   signInWithGoogle,
+  signInWithGoogleRedirect,
+  checkRedirectResult,
   signInWithEmail,
   signUpWithEmail,
   sendPasswordReset,
@@ -14,7 +16,8 @@ import {
   signInWithApple,
   signOutUser,
   subscribeToAuth,
-  loadUserProgress
+  loadUserProgress,
+  getFirebaseServices
 } from './firebase.js';
 import { isFirebaseConfigured } from './firebase-config.js';
 import { StorageManager } from './storage.js';
@@ -24,8 +27,10 @@ const AUTH_STORAGE_KEY = 'codereflex_proto_user_v1';
 export class AuthManager {
   constructor(options = {}) {
     this.onLoginSuccess = options.onLoginSuccess || (() => {});
+    this.onDashboardOpen = options.onDashboardOpen || (() => {});
     this.onLogout = options.onLogout || (() => {});
     this.authMode = 'login'; // 'login' | 'signup'
+    this.currentUser = null;
 
     this.initDOM();
     this.bindEvents();
@@ -33,22 +38,18 @@ export class AuthManager {
   }
 
   getAuthenticatedUser() {
-    try {
-      const data = sessionStorage.getItem(AUTH_STORAGE_KEY);
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
+    return this.currentUser;
   }
 
   isAuthenticated() {
-    return this.getAuthenticatedUser() !== null;
+    return this.currentUser !== null;
   }
 
   initDOM() {
     // Primary View Containers
     this.landingView = document.querySelector('#landing-view');
     this.loginView = document.querySelector('#login-view');
+    this.dashboardView = document.querySelector('#dashboard-view');
     this.appView = document.querySelector('#app-view');
 
     // Landing navigation CTA buttons
@@ -85,11 +86,18 @@ export class AuthManager {
     this.loginEmailErr = document.querySelector('#login-email-err');
     this.loginPasswordErr = document.querySelector('#login-password-err');
 
-    // Dashboard User Badge & Logout Elements
+    // Header User Badge & Logout Elements
     this.btnLogout = document.querySelector('#header-logout-btn');
     this.userBadgeEmail = document.querySelector('#header-user-email');
     this.userBadgeAvatar = document.querySelector('#header-user-avatar');
     this.userBadgeDot = document.querySelector('#header-user-dot');
+
+    // Dedicated Dashboard Elements
+    this.dashUserEmail = document.querySelector('#dash-user-email');
+    this.dashUserName = document.querySelector('#dash-user-name');
+    this.dashUserAvatar = document.querySelector('#dash-user-avatar');
+    this.dashUserDot = document.querySelector('#dash-user-dot');
+    this.dashBtnLogout = document.querySelector('#dash-logout-btn');
   }
 
   bindEvents() {
@@ -129,19 +137,30 @@ export class AuthManager {
 
     // Tabs and Mode Toggle
     if (this.tabAuthLogin) {
-      this.tabAuthLogin.addEventListener('click', () => this.setAuthMode('login'));
+      this.tabAuthLogin.addEventListener('click', () => {
+        this.setAuthMode('login');
+        window.location.hash = '#login';
+      });
     }
     if (this.tabAuthSignup) {
-      this.tabAuthSignup.addEventListener('click', () => this.setAuthMode('signup'));
+      this.tabAuthSignup.addEventListener('click', () => {
+        this.setAuthMode('signup');
+        window.location.hash = '#signup';
+      });
     }
     if (this.btnAuthModeSwitch) {
       this.btnAuthModeSwitch.addEventListener('click', () => {
-        this.setAuthMode(this.authMode === 'login' ? 'signup' : 'login');
+        const nextMode = this.authMode === 'login' ? 'signup' : 'login';
+        this.setAuthMode(nextMode);
+        window.location.hash = nextMode === 'signup' ? '#signup' : '#login';
       });
     }
 
     // Handle browser Back / Forward buttons & URL hash changes
     window.addEventListener('hashchange', () => {
+      this.handleHashChange();
+    });
+    window.addEventListener('popstate', () => {
       this.handleHashChange();
     });
 
@@ -161,15 +180,53 @@ export class AuthManager {
       });
     }
 
-    // 4. Form Submit (Sign In or Create Account)
-    if (this.formDedicatedLogin) {
-      this.formDedicatedLogin.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (this.authMode === 'signup') {
-          this.handleEmailPasswordSignUp();
-        } else {
-          this.handleEmailPasswordLogin();
+    // Live validation feedback on typing
+    if (this.loginNameInput) {
+      this.loginNameInput.addEventListener('input', () => {
+        if (this.loginNameInput.value.trim()) {
+          this.setInputErrorState(this.loginNameInput, false);
+          this.showInlineError(this.loginNameErr, '');
         }
+      });
+    }
+
+    if (this.loginEmailInput) {
+      this.loginEmailInput.addEventListener('input', () => {
+        const val = this.loginEmailInput.value.trim();
+        if (val && this.validateEmail(val)) {
+          this.setInputErrorState(this.loginEmailInput, false);
+          this.showInlineError(this.loginEmailErr, '');
+        }
+      });
+    }
+
+    if (this.loginPasswordInput) {
+      this.loginPasswordInput.addEventListener('input', () => {
+        const val = this.loginPasswordInput.value;
+        const minLen = this.authMode === 'signup' ? 8 : 6;
+        if (val && val.length >= minLen) {
+          this.setInputErrorState(this.loginPasswordInput, false);
+          this.showInlineError(this.loginPasswordErr, '');
+        }
+      });
+    }
+
+    // 4. Form Submit (Sign In or Create Account)
+    const handleAuthSubmit = (e) => {
+      if (e) e.preventDefault();
+      if (this.authMode === 'signup') {
+        this.handleEmailPasswordSignUp();
+      } else {
+        this.handleEmailPasswordLogin();
+      }
+    };
+
+    if (this.formDedicatedLogin) {
+      this.formDedicatedLogin.addEventListener('submit', handleAuthSubmit);
+    }
+    if (this.btnSubmitLogin) {
+      this.btnSubmitLogin.addEventListener('click', (e) => {
+        handleAuthSubmit(e);
       });
     }
 
@@ -200,9 +257,14 @@ export class AuthManager {
       });
     }
 
-    // 7. Dashboard Logout Button
+    // 7. Logout Buttons (Header & Dedicated Dashboard)
     if (this.btnLogout) {
       this.btnLogout.addEventListener('click', () => {
+        this.handleLogout();
+      });
+    }
+    if (this.dashBtnLogout) {
+      this.dashBtnLogout.addEventListener('click', () => {
         this.handleLogout();
       });
     }
@@ -258,16 +320,13 @@ export class AuthManager {
   }
 
   openLoginFlow(initialMode = 'login') {
-    if (this.isAuthenticated()) {
-      this.showDashboard();
-      return;
-    }
-    window.location.hash = '#login';
+    this.authMode = initialMode;
+    window.location.hash = initialMode === 'signup' ? '#signup' : '#login';
     this.showLoginView(initialMode);
   }
 
   closeLoginFlow() {
-    if (window.location.hash === '#login') {
+    if (window.location.hash === '#login' || window.location.hash === '#signup') {
       try {
         history.pushState('', document.title, window.location.pathname + window.location.search);
       } catch {
@@ -279,8 +338,10 @@ export class AuthManager {
 
   handleHashChange() {
     if (this.isAuthenticated()) return;
-    if (window.location.hash === '#login') {
-      this.showLoginView();
+    if (window.location.hash === '#signup') {
+      this.showLoginView('signup');
+    } else if (window.location.hash === '#login') {
+      this.showLoginView(this.authMode || 'login');
     } else {
       this.showLanding();
     }
@@ -288,53 +349,108 @@ export class AuthManager {
 
   /**
    * Restores session on load / refresh via Firebase or session storage.
+   * Handles redirect sign-in returns, pre-warms Firebase SDK for instantaneous popups,
+   * and synchronizes Firestore progress non-blockingly.
    */
   async checkInitialRoute() {
+    // 1. Check if returning from a Google redirect authentication
+    try {
+      const redirectRes = await checkRedirectResult();
+      if (redirectRes && redirectRes.success && redirectRes.user) {
+        this.currentUser = {
+          uid: redirectRes.user.uid,
+          email: redirectRes.user.email,
+          name: redirectRes.user.displayName || redirectRes.user.email.split('@')[0],
+          photoURL: redirectRes.user.photoURL,
+          isGoogle: true,
+          loginAt: new Date().toISOString()
+        };
+        try {
+          sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(this.currentUser));
+          sessionStorage.setItem('codereflex_active_app_session', '1');
+        } catch {}
+
+        loadUserProgress(redirectRes.user.uid).then(cloudData => {
+          if (cloudData) StorageManager.syncCloudProgress(cloudData);
+        }).catch(() => {});
+
+        this.showDashboard();
+        return;
+      } else if (redirectRes && !redirectRes.success && redirectRes.message) {
+        this.showLoginView();
+        this.showStatusBanner(`Google sign-in error: ${redirectRes.message}`, 'error');
+        return;
+      }
+    } catch (err) {
+      console.warn('Redirect check error:', err);
+    }
+
+    // 2. Pre-warm Firebase services in background for immediate click responsiveness
+    getFirebaseServices().catch(() => {});
+
+    // 3. Subscribe to Firebase Auth state
     try {
       await subscribeToAuth(async (firebaseUser) => {
-        if (firebaseUser) {
-          const sessionUser = {
+        const hasActiveSession = typeof sessionStorage !== 'undefined' &&
+          sessionStorage.getItem('codereflex_active_app_session') === '1';
+
+        if (firebaseUser && hasActiveSession) {
+          const isGoogleUser = firebaseUser.providerData?.some(p => p.providerId === 'google.com') ?? true;
+          this.currentUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
             photoURL: firebaseUser.photoURL || null,
-            isGoogle: true,
+            isGoogle: isGoogleUser,
             loginAt: new Date().toISOString()
           };
 
           try {
-            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
-          } catch {
-            // Memory fallback
-          }
+            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(this.currentUser));
+          } catch {}
 
-          // Sync cloud progress
-          try {
-            const cloudData = await loadUserProgress(firebaseUser.uid);
-            if (cloudData) {
-              StorageManager.syncCloudProgress(cloudData);
-            }
-          } catch (syncErr) {
-            console.warn('Initial cloud progress sync error:', syncErr);
-          }
+          // Background cloud progress sync without blocking dashboard navigation
+          loadUserProgress(firebaseUser.uid).then(cloudData => {
+            if (cloudData) StorageManager.syncCloudProgress(cloudData);
+          }).catch(syncErr => {
+            console.warn('Background cloud progress sync notice:', syncErr);
+          });
 
           this.showDashboard();
         } else {
-          // If no active Firebase session, check if existing session exists
-          if (this.isAuthenticated()) {
-            this.showDashboard();
+          // If no active in-app session or user is logged out, clear currentUser
+          if (!hasActiveSession) {
+            this.currentUser = null;
+            try {
+              sessionStorage.removeItem(AUTH_STORAGE_KEY);
+              localStorage.removeItem(AUTH_STORAGE_KEY);
+            } catch {}
+          }
+
+          // Direct hash navigation
+          if (window.location.hash === '#signup') {
+            this.showLoginView('signup');
           } else if (window.location.hash === '#login') {
-            this.showLoginView();
+            this.showLoginView(this.authMode || 'login');
           } else {
+            // Fresh visit to / or any stale non-auth hash (e.g. #levels, #code) -> ALWAYS display landing page
+            if (window.location.hash && window.location.hash !== '#login' && window.location.hash !== '#signup' && !window.location.hash.startsWith('#section-')) {
+              try {
+                history.replaceState('', document.title, window.location.pathname + window.location.search);
+              } catch {
+                window.location.hash = '';
+              }
+            }
             this.showLanding();
           }
         }
       });
     } catch {
-      if (this.isAuthenticated()) {
-        this.showDashboard();
+      this.currentUser = null;
+      if (window.location.hash === '#signup') {
+        this.showLoginView('signup');
       } else if (window.location.hash === '#login') {
-        this.showLoginView();
+        this.showLoginView(this.authMode || 'login');
       } else {
         this.showLanding();
       }
@@ -344,6 +460,7 @@ export class AuthManager {
   showLanding() {
     if (this.landingView) this.landingView.classList.remove('hidden');
     if (this.loginView) this.loginView.classList.add('hidden');
+    if (this.dashboardView) this.dashboardView.classList.add('hidden');
     if (this.appView) this.appView.classList.add('hidden');
     document.body.classList.remove('in-app');
     window.scrollTo(0, 0);
@@ -352,6 +469,7 @@ export class AuthManager {
   showLoginView(mode = 'login') {
     if (this.landingView) this.landingView.classList.add('hidden');
     if (this.loginView) this.loginView.classList.remove('hidden');
+    if (this.dashboardView) this.dashboardView.classList.add('hidden');
     if (this.appView) this.appView.classList.add('hidden');
     document.body.classList.remove('in-app');
 
@@ -360,14 +478,19 @@ export class AuthManager {
   }
 
   showDashboard() {
+    try {
+      sessionStorage.setItem('codereflex_active_app_session', '1');
+    } catch {}
+
     if (this.landingView) this.landingView.classList.add('hidden');
     if (this.loginView) this.loginView.classList.add('hidden');
-    if (this.appView) this.appView.classList.remove('hidden');
+    if (this.appView) this.appView.classList.add('hidden');
+    if (this.dashboardView) this.dashboardView.classList.remove('hidden');
     document.body.classList.add('in-app');
 
-    if (window.location.hash === '#login') {
+    if (window.location.hash === '#login' || window.location.hash === '#signup') {
       try {
-        history.pushState('', document.title, window.location.pathname + window.location.search);
+        history.replaceState('', document.title, window.location.pathname + window.location.search);
       } catch {
         window.location.hash = '';
       }
@@ -375,8 +498,26 @@ export class AuthManager {
 
     const user = this.getAuthenticatedUser();
     if (user) {
+      const displayName = user.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Coder');
+      if (this.dashUserName) {
+        this.dashUserName.textContent = displayName;
+      }
+      if (this.dashUserEmail) {
+        this.dashUserEmail.textContent = user.email || displayName;
+      }
+      if (this.dashUserAvatar && this.dashUserDot) {
+        if (user.photoURL) {
+          this.dashUserAvatar.src = user.photoURL;
+          this.dashUserAvatar.classList.remove('hidden');
+          this.dashUserDot.classList.add('hidden');
+        } else {
+          this.dashUserAvatar.classList.add('hidden');
+          this.dashUserDot.classList.remove('hidden');
+        }
+      }
+
       if (this.userBadgeEmail) {
-        this.userBadgeEmail.textContent = user.name || user.displayName || user.email;
+        this.userBadgeEmail.textContent = displayName;
       }
       if (this.userBadgeAvatar && this.userBadgeDot) {
         if (user.photoURL) {
@@ -390,7 +531,24 @@ export class AuthManager {
       }
     }
 
+    if (typeof this.onDashboardOpen === 'function') {
+      this.onDashboardOpen(user);
+    }
+
     this.onLoginSuccess(user);
+  }
+
+  showPracticePortal() {
+    try {
+      sessionStorage.setItem('codereflex_active_app_session', '1');
+    } catch {}
+
+    if (this.landingView) this.landingView.classList.add('hidden');
+    if (this.loginView) this.loginView.classList.add('hidden');
+    if (this.dashboardView) this.dashboardView.classList.add('hidden');
+    if (this.appView) this.appView.classList.remove('hidden');
+    document.body.classList.add('in-app');
+    window.scrollTo(0, 0);
   }
 
   validateEmail(email) {
@@ -410,22 +568,38 @@ export class AuthManager {
     let hasError = false;
 
     if (!email) {
-      this.showInlineError(this.loginEmailErr, 'Email is required');
+      this.showInlineError(this.loginEmailErr, 'Email address is required');
+      this.setInputErrorState(this.loginEmailInput, true);
       hasError = true;
     } else if (!this.validateEmail(email)) {
-      this.showInlineError(this.loginEmailErr, 'Please enter a valid email address');
+      this.showInlineError(this.loginEmailErr, 'Please enter a complete and valid email address (e.g. name@example.com)');
+      this.setInputErrorState(this.loginEmailInput, true);
       hasError = true;
+    } else {
+      this.setInputErrorState(this.loginEmailInput, false);
     }
 
     if (!password) {
       this.showInlineError(this.loginPasswordErr, 'Password is required');
+      this.setInputErrorState(this.loginPasswordInput, true);
       hasError = true;
-    } else if (password.length < 8) {
-      this.showInlineError(this.loginPasswordErr, 'Password must be at least 8 characters');
+    } else if (password.length < 6) {
+      this.showInlineError(this.loginPasswordErr, 'Password must be at least 6 characters');
+      this.setInputErrorState(this.loginPasswordInput, true);
       hasError = true;
+    } else {
+      this.setInputErrorState(this.loginPasswordInput, false);
     }
 
-    if (hasError) return;
+    if (hasError) {
+      this.showStatusBanner('Please resolve the errors highlighted below.', 'error');
+      if (!email || !this.validateEmail(email)) {
+        if (this.loginEmailInput) this.loginEmailInput.focus();
+      } else if (this.loginPasswordInput) {
+        this.loginPasswordInput.focus();
+      }
+      return;
+    }
 
     if (this.btnSubmitLogin) {
       this.btnSubmitLogin.disabled = true;
@@ -444,18 +618,22 @@ export class AuthManager {
             isGoogle: false,
             loginAt: new Date().toISOString()
           };
+          this.currentUser = sessionUser;
           try {
             sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
           } catch {}
 
-          try {
-            const cloudData = await loadUserProgress(result.user.uid);
+          // Background cloud progress sync
+          loadUserProgress(result.user.uid).then(cloudData => {
             if (cloudData) StorageManager.syncCloudProgress(cloudData);
-          } catch {}
+          }).catch(() => {});
 
+          this.clearStatusBanner();
+          this.clearValidationErrors();
           this.showDashboard();
         } else {
-          this.showStatusBanner(result.message || 'Authentication failed. Please verify credentials.', 'error');
+          this.showStatusBanner(result.message || 'Authentication failed. Please check your credentials.', 'error');
+          this.setInputErrorState(this.loginPasswordInput, true);
         }
       } else {
         // Firebase unconfigured warning with local demo option
@@ -474,13 +652,16 @@ export class AuthManager {
               isPrototype: true,
               loginAt: new Date().toISOString()
             };
-            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(protoUser));
+            this.currentUser = protoUser;
+            try {
+              sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(protoUser));
+            } catch {}
             this.showDashboard();
           });
         }
       }
     } catch (err) {
-      this.showStatusBanner('An unexpected error occurred during login.', 'error');
+      this.showStatusBanner('An unexpected error occurred during login. Please try again.', 'error');
     } finally {
       if (this.btnSubmitLogin) {
         this.btnSubmitLogin.disabled = false;
@@ -501,23 +682,49 @@ export class AuthManager {
     const password = this.loginPasswordInput ? this.loginPasswordInput.value : '';
     let hasError = false;
 
+    if (!name) {
+      this.showInlineError(this.loginNameErr, 'Please enter your full name');
+      this.setInputErrorState(this.loginNameInput, true);
+      hasError = true;
+    } else {
+      this.setInputErrorState(this.loginNameInput, false);
+    }
+
     if (!email) {
-      this.showInlineError(this.loginEmailErr, 'Email is required');
+      this.showInlineError(this.loginEmailErr, 'Email address is required');
+      this.setInputErrorState(this.loginEmailInput, true);
       hasError = true;
     } else if (!this.validateEmail(email)) {
-      this.showInlineError(this.loginEmailErr, 'Please enter a valid email address');
+      this.showInlineError(this.loginEmailErr, 'Please enter a complete and valid email address (e.g. name@example.com)');
+      this.setInputErrorState(this.loginEmailInput, true);
       hasError = true;
+    } else {
+      this.setInputErrorState(this.loginEmailInput, false);
     }
 
     if (!password) {
       this.showInlineError(this.loginPasswordErr, 'Password is required');
+      this.setInputErrorState(this.loginPasswordInput, true);
       hasError = true;
     } else if (password.length < 8) {
-      this.showInlineError(this.loginPasswordErr, 'Password must be at least 8 characters');
+      this.showInlineError(this.loginPasswordErr, 'Password must be at least 8 characters long');
+      this.setInputErrorState(this.loginPasswordInput, true);
       hasError = true;
+    } else {
+      this.setInputErrorState(this.loginPasswordInput, false);
     }
 
-    if (hasError) return;
+    if (hasError) {
+      this.showStatusBanner('Please resolve the errors highlighted below.', 'error');
+      if (!name) {
+        if (this.loginNameInput) this.loginNameInput.focus();
+      } else if (!email || !this.validateEmail(email)) {
+        if (this.loginEmailInput) this.loginEmailInput.focus();
+      } else if (this.loginPasswordInput) {
+        this.loginPasswordInput.focus();
+      }
+      return;
+    }
 
     if (this.btnSubmitLogin) {
       this.btnSubmitLogin.disabled = true;
@@ -536,13 +743,17 @@ export class AuthManager {
             isGoogle: false,
             loginAt: new Date().toISOString()
           };
+          this.currentUser = sessionUser;
           try {
             sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
           } catch {}
 
+          this.clearStatusBanner();
+          this.clearValidationErrors();
           this.showDashboard();
         } else {
           this.showStatusBanner(result.message || 'Failed to create account. Please try again.', 'error');
+          // Preserve all input fields so user does not lose progress
         }
       } else {
         // Firebase unconfigured warning with local demo option
@@ -561,7 +772,10 @@ export class AuthManager {
               isPrototype: true,
               loginAt: new Date().toISOString()
             };
-            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(protoUser));
+            this.currentUser = protoUser;
+            try {
+              sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(protoUser));
+            } catch {}
             this.showDashboard();
           });
         }
@@ -586,11 +800,13 @@ export class AuthManager {
     const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : '';
     if (!email) {
       this.showInlineError(this.loginEmailErr, 'Please enter your email above first');
+      this.setInputErrorState(this.loginEmailInput, true);
       if (this.loginEmailInput) this.loginEmailInput.focus();
       return;
     }
     if (!this.validateEmail(email)) {
-      this.showInlineError(this.loginEmailErr, 'Please enter a valid email address');
+      this.showInlineError(this.loginEmailErr, 'Please enter a complete and valid email address');
+      this.setInputErrorState(this.loginEmailInput, true);
       return;
     }
 
@@ -614,7 +830,7 @@ export class AuthManager {
   }
 
   /**
-   * Handles Google OAuth sign-in with Firebase.
+   * Handles Google OAuth sign-in with Firebase (Popup with automatic Redirect fallback).
    */
   async handleGoogleSignIn() {
     this.clearStatusBanner();
@@ -647,28 +863,56 @@ export class AuthManager {
           isGoogle: true,
           loginAt: new Date().toISOString()
         };
+        this.currentUser = sessionPayload;
 
         try {
           sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionPayload));
         } catch {}
 
-        try {
-          const cloudData = await loadUserProgress(result.user.uid);
+        loadUserProgress(result.user.uid).then(cloudData => {
           if (cloudData) StorageManager.syncCloudProgress(cloudData);
-        } catch {}
+        }).catch(() => {});
 
         this.clearStatusBanner();
+        this.clearValidationErrors();
         this.showDashboard();
       } else {
-        if (result.code === 'auth/popup-closed-by-user') {
-          this.showStatusBanner('Sign-in cancelled. The Google popup was closed.', 'warning');
-        } else if (result.code === 'unconfigured') {
+        const errorCode = result.code || 'unknown';
+        console.warn('[CodeReflex Auth] Captured Google Sign-In failure code:', errorCode);
+
+        if (errorCode === 'auth/unauthorized-domain') {
+          const currentHost = window.location.hostname;
+          let hint = '';
+          if (currentHost === '127.0.0.1') {
+            hint = `<div style="margin-top:6px;"><strong>Tip:</strong> Open <a href="http://localhost:8000" style="color:#38bdf8; text-decoration:underline;">http://localhost:8000</a> instead of 127.0.0.1, because <code>localhost</code> is authorized by default in Firebase.</div>`;
+          } else {
+            hint = `<div style="margin-top:6px;">Add <code>${currentHost}</code> in <strong>Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains</strong>.</div>`;
+          }
+          this.showStatusBanner(`<strong>Unauthorized Domain (${errorCode}):</strong> ${result.message}${hint}`, 'error');
+        } else if (errorCode === 'auth/popup-blocked' || errorCode === 'auth/popup-closed-by-user') {
+          const bannerMsg = errorCode === 'auth/popup-blocked'
+            ? `<strong>Popup Blocked (${errorCode}):</strong> Your browser blocked the Google sign-in window.<br>`
+            : `<strong>Popup Closed (${errorCode}):</strong> The Google popup was closed before completing.<br>`;
+
           this.showStatusBanner(
-            '<strong>Firebase Configuration Required:</strong> To enable Google Sign-In and Cloud Firestore, enter your web app credentials in <code>js/firebase-config.js</code>.',
+            `${bannerMsg}
+             <div style="margin-top:8px;">
+               <button type="button" class="btn-status-redirect" id="btn-status-google-redirect">
+                 Continue with Google Sign-In (Redirect)
+               </button>
+             </div>`,
             'warning'
           );
+
+          const btnRedirect = document.querySelector('#btn-status-google-redirect');
+          if (btnRedirect) {
+            btnRedirect.addEventListener('click', async () => {
+              this.showStatusBanner('Redirecting to Google...', 'info');
+              await signInWithGoogleRedirect();
+            });
+          }
         } else {
-          this.showStatusBanner(result.message || 'Google sign-in could not be completed.', 'error');
+          this.showStatusBanner(`<strong>Sign-In Error (${errorCode}):</strong> ${result.message}`, 'error');
         }
       }
     } catch (err) {
@@ -702,6 +946,7 @@ export class AuthManager {
           isGoogle: false,
           loginAt: new Date().toISOString()
         };
+        this.currentUser = sessionPayload;
         try {
           sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionPayload));
         } catch {}
@@ -736,6 +981,7 @@ export class AuthManager {
           isGoogle: false,
           loginAt: new Date().toISOString()
         };
+        this.currentUser = sessionPayload;
         try {
           sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionPayload));
         } catch {}
@@ -751,15 +997,21 @@ export class AuthManager {
   }
 
   async handleLogout() {
+    this.currentUser = null;
     try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
       sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem('codereflex_active_app_session');
+    } catch {}
+
+    this.onLogout();
+    this.closeLoginFlow();
+
+    try {
       await signOutUser();
     } catch (err) {
       console.warn('Logout error:', err);
     }
-
-    this.onLogout();
-    this.closeLoginFlow();
   }
 
   showStatusBanner(messageHtml, type = 'error') {
@@ -779,10 +1031,18 @@ export class AuthManager {
     if (errorElement) errorElement.textContent = message;
   }
 
+  setInputErrorState(inputEl, hasError) {
+    if (!inputEl) return;
+    inputEl.classList.toggle('has-error', !!hasError);
+  }
+
   clearValidationErrors() {
     if (this.loginNameErr) this.loginNameErr.textContent = '';
     if (this.loginEmailErr) this.loginEmailErr.textContent = '';
     if (this.loginPasswordErr) this.loginPasswordErr.textContent = '';
+    this.setInputErrorState(this.loginNameInput, false);
+    this.setInputErrorState(this.loginEmailInput, false);
+    this.setInputErrorState(this.loginPasswordInput, false);
   }
 }
 

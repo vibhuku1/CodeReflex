@@ -1,0 +1,1038 @@
+/**
+ * CodeReflex - Authenticated Dashboard Styling
+ * Recreates the exact visual design from the reference:
+ * Dark theme, crimson accents, hero panda mascot banner, level progress ring,
+ * language practice cards (HTML, CSS, JS), 4 key stat cards,
+ * recent practice list, and weekly progress bar chart.
+ */
+
+/* ==========================================================================
+   Dashboard Root Container
+   ========================================================================== */
+
+.dashboard-view {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #080a11;
+  background-image: 
+    radial-gradient(circle at 18% 12%, rgba(255, 45, 85, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 82% 8%, rgba(56, 189, 248, 0.04) 0%, transparent 35%),
+    radial-gradient(circle at 50% 90%, rgba(255, 45, 85, 0.05) 0%, transparent 50%),
+    linear-gradient(180deg, #090b12 0%, #06070a 100%);
+  color: #f1f5f9;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+
+.dashboard-view.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Dashboard Top Header Navigation
+   ========================================================================== */
+
+.dashboard-header {
+  height: 60px;
+  min-height: 60px;
+  background-color: rgba(10, 12, 19, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 20;
+}
+
+.dash-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dash-header-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dash-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.dash-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-header-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dash-header-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dash-header-btn.btn-dash-logout {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.dash-header-btn.btn-dash-logout:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.dash-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.dash-user-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dash-user-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-emerald);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+/* ==========================================================================
+   Dashboard Scrollable Body & Grid Layout
+   ========================================================================== */
+
+.dashboard-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 28px 32px 48px;
+}
+
+.dashboard-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ==========================================================================
+   1. TOP ROW: Hero Welcome Card + Level Progress Ring Card
+   ========================================================================== */
+
+.dash-hero-row {
+  display: grid;
+  grid-template-columns: 2.1fr 1fr;
+  gap: 20px;
+}
+
+/* Hero Welcome Card */
+.dash-hero-card {
+  position: relative;
+  background: linear-gradient(135deg, #13141f 0%, #171827 60%, #1e1525 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 32px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dash-hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: radial-gradient(ellipse at bottom left, rgba(255, 45, 85, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.dash-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+}
+
+.dash-hero-greeting {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-hero-greeting .highlight-crimson {
+  color: #ff2d55;
+}
+
+.dash-hero-greeting .wave-emoji {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: waveHand 2s infinite ease-in-out;
+}
+
+@keyframes waveHand {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(14deg); }
+  40%, 80% { transform: rotate(-10deg); }
+}
+
+.dash-hero-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.dash-hero-sub {
+  font-size: 13.5px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.dash-hero-art {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 250px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.dash-hero-mascot-img {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(255, 45, 85, 0.25));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Level Progress Card (Right) */
+.dash-level-card {
+  background: linear-gradient(135deg, #141522 0%, #18192a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.dash-card-header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dash-card-header-label svg {
+  color: #ff2d55;
+}
+
+.dash-ring-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0 16px;
+  position: relative;
+}
+
+.dash-progress-ring-svg {
+  width: 130px;
+  height: 130px;
+  transform: rotate(-90deg);
+}
+
+.dash-ring-bg {
+  fill: none;
+  stroke: #222538;
+  stroke-width: 11;
+}
+
+.dash-ring-fill {
+  fill: none;
+  stroke: #ff2d55;
+  stroke-width: 11;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out;
+  filter: drop-shadow(0 0 8px rgba(255, 45, 85, 0.6));
+}
+
+.dash-ring-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dash-ring-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.dash-ring-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.btn-dash-continue {
+  width: 100%;
+  background: linear-gradient(90deg, #ff2d55 0%, #ff476f 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 45, 85, 0.4);
+  transition: all var(--transition-fast);
+}
+
+.btn-dash-continue:hover {
+  background: linear-gradient(90deg, #e62248 0%, #ff335e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(255, 45, 85, 0.6);
+}
+
+/* ==========================================================================
+   2. MIDDLE ROW 1: HTML, CSS, JavaScript Practice Cards
+   ========================================================================== */
+
+.dash-languages-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.dash-lang-card {
+  background: #141724;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.22s ease-out;
+}
+
+.dash-lang-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity 0.22s ease-out;
+}
+
+.dash-lang-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.dash-lang-card:hover::before {
+  opacity: 0.45;
+}
+
+/* HTML Theme */
+.dash-card-html::before {
+  background: radial-gradient(ellipse at bottom left, #ff3b30 0%, transparent 70%);
+}
+.dash-card-html .dash-lang-badge {
+  background: linear-gradient(135deg, #e44d26, #f16529);
+}
+
+/* CSS Theme */
+.dash-card-css::before {
+  background: radial-gradient(ellipse at bottom left, #0284c7 0%, transparent 70%);
+}
+.dash-card-css .dash-lang-badge {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+}
+
+/* JS Theme */
+.dash-card-js::before {
+  background: radial-gradient(ellipse at bottom left, #d97706 0%, transparent 70%);
+}
+.dash-card-js .dash-lang-badge {
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  color: #1c1917;
+}
+
+.dash-lang-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dash-lang-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.dash-lang-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-lang-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.dash-lang-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.dash-lang-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.dash-lang-footer svg {
+  color: #ff2d55;
+}
+
+.dash-card-css .dash-lang-footer svg {
+  color: #38bdf8;
+}
+
+.dash-card-js .dash-lang-footer svg {
+  color: #fbbf24;
+}
+
+.dash-lang-arrow-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  font-size: 15px;
+  transition: all var(--transition-fast);
+}
+
+.dash-lang-card:hover .dash-lang-arrow-btn {
+  background: #ff2d55;
+  color: #ffffff;
+  border-color: #ff2d55;
+  transform: translateX(2px);
+}
+
+.dash-card-css:hover .dash-lang-arrow-btn {
+  background: #0284c7;
+  border-color: #0284c7;
+}
+
+.dash-card-js:hover .dash-lang-arrow-btn {
+  background: #eab308;
+  color: #1e1b4b;
+  border-color: #eab308;
+}
+
+/* ==========================================================================
+   3. MIDDLE ROW 2: Four Key Metric Statistics Cards
+   ========================================================================== */
+
+.dash-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.dash-stat-card {
+  background: #121420;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dash-stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-stat-icon-wrap.icon-speed {
+  background: rgba(16, 185, 129, 0.12);
+  border: 2px solid #10b981;
+  color: #10b981;
+}
+
+.dash-stat-icon-wrap.icon-acc {
+  background: rgba(168, 85, 247, 0.12);
+  border: 2px solid #a855f7;
+  color: #a855f7;
+}
+
+.dash-stat-icon-wrap.icon-level {
+  background: rgba(59, 130, 246, 0.12);
+  border: 2px solid #3b82f6;
+  color: #3b82f6;
+}
+
+.dash-stat-icon-wrap.icon-time {
+  background: rgba(239, 68, 68, 0.12);
+  border: 2px solid #ef4444;
+  color: #ef4444;
+}
+
+.dash-stat-data {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-stat-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.dash-stat-val-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dash-stat-number {
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.dash-stat-trend {
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dash-stat-trend.trend-up {
+  color: #10b981;
+}
+
+.dash-level-prog-wrap {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-level-prog-track {
+  flex: 1;
+  height: 5px;
+  background: #232738;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dash-level-prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2d55, #ff476f);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.dash-level-prog-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   4. BOTTOM ROW: Recent Practice & Weekly Progress Panels
+   ========================================================================== */
+
+.dash-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dash-panel {
+  background: #121420;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px 26px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.dash-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dash-panel-title svg {
+  color: #ff2d55;
+}
+
+.btn-dash-view-all {
+  background: transparent;
+  border: none;
+  color: #ff2d55;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.btn-dash-view-all:hover {
+  background: rgba(255, 45, 85, 0.1);
+}
+
+.dash-select-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* Recent Practice List */
+.dash-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.dash-recent-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dash-recent-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.dash-recent-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-item-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.dash-item-badge.badge-js {
+  background: #f59e0b;
+  color: #18181b;
+}
+
+.dash-item-badge.badge-css {
+  background: #0284c7;
+}
+
+.dash-item-badge.badge-html {
+  background: #e44d26;
+}
+
+.dash-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-item-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.dash-item-meta {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.dash-recent-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dash-item-wpm {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dash-item-acc {
+  font-size: 13px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.dash-item-chevron {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Empty State */
+.dash-recent-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: #64748b;
+  gap: 8px;
+}
+
+.dash-recent-empty p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Weekly Progress Chart */
+.dash-weekly-chart-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 160px;
+  padding-top: 10px;
+}
+
+.dash-chart-grid-area {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 130px;
+  padding: 0 10px;
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dash-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  width: 11%;
+  position: relative;
+}
+
+.dash-chart-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: rgba(255, 45, 85, 0.35);
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 8px;
+}
+
+.dash-chart-col.active .dash-chart-bar {
+  background: linear-gradient(180deg, #ff2d55 0%, #d81b43 100%);
+  box-shadow: 0 0 14px rgba(255, 45, 85, 0.5);
+}
+
+.dash-chart-tooltip {
+  position: absolute;
+  top: -26px;
+  background: #1e202d;
+  border: 1px solid rgba(255, 45, 85, 0.5);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.dash-chart-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0;
+  border-style: solid;
+  border-color: #1e202d transparent;
+}
+
+.dash-chart-labels-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dash-chart-labels-row span {
+  width: 11%;
+  text-align: center;
+}
+
+/* ==========================================================================
+   5. MINIMAL CLEAN PRACTICE PORTAL HEADER
+   ========================================================================== */
+
+.btn-back-dashboard {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-back-dashboard:hover {
+  background: rgba(255, 45, 85, 0.15);
+  border-color: rgba(255, 45, 85, 0.35);
+  color: #ffffff;
+}
+
+.practice-active-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-lang-pill {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 45, 85, 0.15);
+  border: 1px solid rgba(255, 45, 85, 0.3);
+  color: #ff476f;
+}
+
+.practice-challenge-info {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.practice-snippet-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-practice-levels {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-practice-levels:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .dash-hero-row {
+    grid-template-columns: 1fr;
+  }
+  .dash-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-bottom-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 0 16px;
+  }
+  .dashboard-scroll {
+    padding: 20px 16px 36px;
+  }
+  .dash-languages-row {
+    grid-template-columns: 1fr;
+  }
+  .dash-hero-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  .dash-hero-greeting {
+    justify-content: center;
+  }
+  .dash-hero-art {
+    justify-content: center;
+  }
+}
+
