@@ -5,6 +5,7 @@
 
 const SETTINGS_KEY = 'codereflex_settings_v1';
 const HISTORY_KEY = 'codereflex_history_v1';
+const LEVEL_PROGRESS_KEY = 'codereflex_level_progress_v1';
 
 const DEFAULT_SETTINGS = {
   fontSize: 16,
@@ -103,6 +104,83 @@ export class StorageManager {
       localStorage.removeItem(HISTORY_KEY);
     } catch (err) {
       console.warn('Failed to clear history:', err);
+    }
+  }
+
+  static getLevelProgress() {
+    try {
+      const data = localStorage.getItem(LEVEL_PROGRESS_KEY);
+      return data ? JSON.parse(data) : {
+        level1: {
+          unlockedPart: 1, // 1, 2, or 3
+          parts: {
+            1: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+            2: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+            3: { completed: false, bestWpm: 0, bestAccuracy: 0 }
+          }
+        }
+      };
+    } catch {
+      return {
+        level1: {
+          unlockedPart: 1,
+          parts: {
+            1: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+            2: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+            3: { completed: false, bestWpm: 0, bestAccuracy: 0 }
+          }
+        }
+      };
+    }
+  }
+
+  static recordLevelPartCompletion(levelId, partNum, wpm, accuracy) {
+    const progress = this.getLevelProgress();
+    if (!progress[levelId]) {
+      progress[levelId] = {
+        unlockedPart: 1,
+        parts: {
+          1: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+          2: { completed: false, bestWpm: 0, bestAccuracy: 0 },
+          3: { completed: false, bestWpm: 0, bestAccuracy: 0 }
+        }
+      };
+    }
+
+    const lvl = progress[levelId];
+    if (!lvl.parts) lvl.parts = {};
+    if (!lvl.parts[partNum]) {
+      lvl.parts[partNum] = { completed: false, bestWpm: 0, bestAccuracy: 0 };
+    }
+
+    // Unlock next part if accuracy target of 95% is met
+    if (accuracy >= 95) {
+      lvl.parts[partNum].completed = true;
+      if (partNum < 3 && lvl.unlockedPart <= partNum) {
+        lvl.unlockedPart = partNum + 1;
+      }
+    }
+
+    if (wpm > (lvl.parts[partNum].bestWpm || 0)) {
+      lvl.parts[partNum].bestWpm = wpm;
+    }
+    if (accuracy > (lvl.parts[partNum].bestAccuracy || 0)) {
+      lvl.parts[partNum].bestAccuracy = accuracy;
+    }
+
+    try {
+      localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(progress));
+    } catch (err) {
+      console.warn('Failed to save level progress:', err);
+    }
+    return progress;
+  }
+
+  static clearLevelProgress() {
+    try {
+      localStorage.removeItem(LEVEL_PROGRESS_KEY);
+    } catch (err) {
+      console.warn('Failed to clear level progress:', err);
     }
   }
 }

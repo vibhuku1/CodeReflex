@@ -9,11 +9,391 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/editor.css">
   <link rel="stylesheet" href="css/preview.css">
+  <link rel="stylesheet" href="css/landing.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-  <div class="app-container">
+
+  <!-- ==========================================================================
+       VIEW 1: PUBLIC LANDING PAGE (First Visit)
+       ========================================================================== -->
+  <div class="landing-view" id="landing-view">
+    <!-- Atmospheric Wallpaper Background & Ambient Weather Layer -->
+    <div class="landing-wallpaper-container" aria-hidden="true">
+      <img src="assets/landing-wallpaper.jpg" alt="" class="landing-wallpaper-img" fetchpriority="high" decoding="async">
+      <div class="landing-wallpaper-overlay"></div>
+      <div class="rain-layer"></div>
+      <div class="petals-layer">
+        <div class="petal petal-1"></div>
+        <div class="petal petal-2"></div>
+        <div class="petal petal-3"></div>
+        <div class="petal petal-4"></div>
+        <div class="petal petal-5"></div>
+        <div class="petal petal-6"></div>
+        <div class="petal petal-7"></div>
+        <div class="petal petal-8"></div>
+      </div>
+    </div>
+
+    <!-- Landing Top Navigation Bar -->
+    <header class="landing-header">
+      <div class="header-left">
+        <a href="#section-hero" class="brand-wrapper" title="CodeReflex">
+          <div class="brand-symbol">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <span class="brand-text">CodeReflex</span>
+          <span class="brand-badge">v0.1</span>
+        </a>
+      </div>
+
+      <nav class="landing-nav-links" aria-label="Landing Navigation">
+        <a href="#section-hero" class="landing-nav-link">Home</a>
+        <a href="#section-languages" class="landing-nav-link">Languages</a>
+        <a href="#section-build" class="landing-nav-link">Type-to-Build</a>
+        <a href="#section-stats" class="landing-nav-link">Statistics</a>
+        <a href="#section-levels" class="landing-nav-link">Levels</a>
+        <a href="#section-vision" class="landing-nav-link">Vision</a>
+      </nav>
+
+      <div class="landing-auth-cta-group">
+        <button type="button" class="btn-landing-login" id="landing-btn-login">Login</button>
+        <a href="#auth-section" class="btn-landing-primary">Get Started</a>
+      </div>
+    </header>
+
+    <!-- Main Landing Content -->
+    <main>
+      <!-- 1. Hero Section: Product Introduction -->
+      <section class="landing-hero" id="section-hero">
+        <div class="hero-pill-badge">
+          <span>⚡ Precision Code Typing Platform</span>
+        </div>
+        <h1 class="hero-title">
+          Build Muscle Memory For <span class="highlight-text">Real Code.</span>
+        </h1>
+        <p class="hero-subtitle">
+          CodeReflex is an independent developer platform designed to build typing velocity (WPM), eliminate syntax hesitation, and reinforce real-world programming fluency with live-rendered components.
+        </p>
+        <div class="hero-cta-group">
+          <button type="button" class="btn-shuru-karo" id="landing-btn-practice">
+            <span>Practice shuru karo</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+          <a href="#section-build" class="btn-demo-link">Explore Demo</a>
+        </div>
+      </section>
+
+      <!-- 2. Supported Languages Section -->
+      <section class="landing-section" id="section-languages">
+        <div class="section-header">
+          <div class="section-label">Supported Stacks</div>
+          <h2 class="section-title">Master Real Programming Syntax</h2>
+          <p class="section-desc">
+            Practice typing velocity and precision across languages you write daily. From brackets, curly braces, and indentation to JSX tags and CSS tokens.
+          </p>
+        </div>
+
+        <div class="languages-grid">
+          <div class="language-card">
+            <div class="language-card-top">
+              <span class="lang-pill lang-js">JavaScript</span>
+              <span class="lang-tag">ES6+ / Web</span>
+            </div>
+            <p class="language-card-desc">Async functions, promises, arrow expressions, destructured bindings, and DOM APIs.</p>
+            <div class="language-code-snippet"><code>const data = await res.json();</code></div>
+          </div>
+
+          <div class="language-card">
+            <div class="language-card-top">
+              <span class="lang-pill lang-py">Python</span>
+              <span class="lang-tag">PEP 8 / Indented</span>
+            </div>
+            <p class="language-card-desc">Strict indentation, list comprehensions, decorators, type hints, and clean control flow.</p>
+            <div class="language-code-snippet"><code>def solve(wpm: float) -&gt; bool:</code></div>
+          </div>
+
+          <div class="language-card">
+            <div class="language-card-top">
+              <span class="lang-pill lang-html">HTML5</span>
+              <span class="lang-tag">Semantics / ARIA</span>
+            </div>
+            <p class="language-card-desc">Semantic document structure, accessible ARIA roles, clean element nesting, and attributes.</p>
+            <div class="language-code-snippet"><code>&lt;dialog class="modal-card"&gt;</code></div>
+          </div>
+
+          <div class="language-card">
+            <div class="language-card-top">
+              <span class="lang-pill lang-css">CSS3</span>
+              <span class="lang-tag">Layout &amp; Tokens</span>
+            </div>
+            <p class="language-card-desc">Flexbox, CSS Grid layouts, custom design tokens, keyframe animations, and pseudo-classes.</p>
+            <div class="language-code-snippet"><code>display: flex; gap: var(--pad);</code></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Type-to-Build Interactive Showcase Section -->
+      <section class="landing-section" id="section-build">
+        <div class="section-header">
+          <div class="section-label">Signature Innovation</div>
+          <h2 class="section-title">Type Code. Watch It Render Live.</h2>
+          <p class="section-desc">
+            Unlike generic prose typing tests, CodeReflex features progressive rendering. As you type HTML elements and CSS properties, your component constructs live in the preview pane.
+          </p>
+        </div>
+
+        <div class="showcase-window">
+          <div class="showcase-pane showcase-code-pane">
+            <div class="showcase-pane-header">
+              <span class="pane-tag">Editor View</span>
+              <span style="font-size:11px; color:#38bdf8;">snippet.html</span>
+            </div>
+            <div class="mock-code-line"><span class="mock-tag">&lt;div</span> <span class="mock-attr">class</span>=<span class="mock-str">"telemetry-pill"</span><span class="mock-tag">&gt;</span></div>
+            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"status-dot"</span><span class="mock-tag">&gt;&lt;/span&gt;</span></div>
+            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"label"</span><span class="mock-tag">&gt;</span>Production Live<span class="mock-tag">&lt;/span&gt;</span></div>
+            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"speed"</span><span class="mock-tag">&gt;</span>1.4s<span class="mock-tag">&lt;/span&gt;</span></div>
+            <div class="mock-code-line"><span class="mock-tag">&lt;/div&gt;</span></div>
+          </div>
+          <div class="showcase-pane showcase-preview-pane">
+            <div class="showcase-pane-header" style="width:100%; position:absolute; top:16px; left:20px; right:20px;">
+              <span class="pane-tag">Live Component Sandbox</span>
+              <span class="preview-badge badge-success">Compiled</span>
+            </div>
+            <div class="mock-preview-component">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.04em;">Telemetry</span>
+                <span style="font-size:11px; color:#34d399; background:rgba(16,185,129,0.12); padding:2px 6px; border-radius:999px;">+18.4%</span>
+              </div>
+              <div style="font-size:24px; font-weight:800; color:#ffffff; font-family:var(--font-mono); margin-bottom:4px;">$48,290</div>
+              <div style="font-size:11px; color:#64748b;">Realtime build synchronized with typing engine</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Statistics & Precision Telemetry Section -->
+      <section class="landing-section" id="section-stats">
+        <div class="section-header">
+          <div class="section-label">Typing Telemetry</div>
+          <h2 class="section-title">Engineered For Real Coding Velocity</h2>
+          <p class="section-desc">
+            Accurate calculations designed around real programming syntax, brackets, punctuation, and symbol handling.
+          </p>
+        </div>
+
+        <div class="feature-cards-grid">
+          <div class="feature-card">
+            <div class="feature-card-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <h3 class="feature-card-title">Standard Net WPM</h3>
+            <p class="feature-card-desc">
+              Computed strictly as <code>((correct_characters / 5) / elapsed_minutes)</code>. Starts precisely on your first keystroke and stops at completion.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <h3 class="feature-card-title">Strict Syntax Accuracy</h3>
+            <p class="feature-card-desc">
+              Instant visual mistake feedback with wavy error underlines. Accurately tracks curly braces, quotes, semicolons, brackets, and newlines.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-card-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 20V10M12 20V4M6 20v-6"></path>
+              </svg>
+            </div>
+            <h3 class="feature-card-title">Rhythm Progression</h3>
+            <p class="feature-card-desc">
+              Detailed post-challenge breakdown showing interval WPM bars, keystroke consistency, raw vs net speed, and session history stored locally.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Progressive Level System Section -->
+      <section class="landing-section" id="section-levels">
+        <div class="section-header">
+          <div class="section-label">Structured Progression</div>
+          <h2 class="section-title">Level 1: Three Progressive Parts</h2>
+          <p class="section-desc">
+            Complete sequential milestones to master coding fluency. Advance to the next part only upon achieving 95% typing accuracy.
+          </p>
+        </div>
+
+        <div class="feature-cards-grid">
+          <div class="feature-card">
+            <div class="part-badge" style="color:var(--accent-cyan); margin-bottom:12px;">Part 1 • Unlocked</div>
+            <h3 class="feature-card-title">HTML Structure</h3>
+            <p class="feature-card-desc">
+              Type the semantic skeleton of the status component. Master HTML tag tags, classes, and nested element hierarchy.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="part-badge" style="color:var(--accent-amber); margin-bottom:12px;">Part 2 • Requires 95% on Part 1</div>
+            <h3 class="feature-card-title">CSS Styling</h3>
+            <p class="feature-card-desc">
+              Apply flexbox alignment, pill border-radius, emerald color tones, and glassmorphic styling live to the component.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="part-badge" style="color:var(--accent-emerald); margin-bottom:12px;">Part 3 • Requires 95% on Part 2</div>
+            <h3 class="feature-card-title">Complete Design</h3>
+            <p class="feature-card-desc">
+              Assemble the finished production telemetry card with glowing pulse indicator and interactive inspection control.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Vision & Mission Section -->
+      <section class="landing-section" id="section-vision">
+        <div class="section-header">
+          <div class="section-label">Core Philosophy</div>
+          <h2 class="section-title">Why CodeReflex Exists</h2>
+        </div>
+
+        <div class="vision-grid">
+          <div class="vision-card">
+            <div class="vision-badge">Our Vision</div>
+            <h3>Direct Thought-to-Code Velocity</h3>
+            <p>
+              Developers think in algorithms, structures, and systems. We believe typing should never be the bottleneck. CodeReflex bridges the gap between conceiving an idea and typing it out smoothly without awkward keyboard finger-twisting on symbols like <code>{}</code>, <code>[]</code>, <code>()</code>, <code>=&gt;</code>, or <code>;</code>.
+            </p>
+          </div>
+
+          <div class="vision-card">
+            <div class="vision-badge" style="color:var(--accent-cyan);">Our Mission</div>
+            <h3>Real Syntax Over Random Words</h3>
+            <p>
+              Typing "the quick brown fox" does nothing for your programming velocity. CodeReflex grounds practice entirely in authentic programming idioms across HTML, CSS, JavaScript, and Python, paired with visual instant gratification through real-time component construction.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Developer Authentication Card Section -->
+      <section class="landing-auth-section" id="auth-section">
+        <div class="auth-card">
+          <!-- Auth Tabs: Login vs Sign Up -->
+          <div class="auth-tabs" role="tablist">
+            <button type="button" class="auth-tab active" id="tab-auth-login" role="tab" aria-selected="true">Sign In</button>
+            <button type="button" class="auth-tab" id="tab-auth-signup" role="tab" aria-selected="false">Create Account</button>
+          </div>
+
+          <!-- Prototype Mode Disclaimer -->
+          <div class="auth-prototype-disclaimer">
+            <strong>Prototype Mode:</strong> Client-side demo session. Real OAuth &amp; backend credentials integration connects in a future release. Plaintext passwords are never saved.
+          </div>
+
+          <!-- Form 1: Sign In -->
+          <form id="form-login" novalidate>
+            <div class="auth-form-group">
+              <label for="login-email" class="auth-label">Email Address</label>
+              <div class="auth-input-wrapper">
+                <input type="email" id="login-email" class="auth-input" placeholder="developer@company.com" autocomplete="email">
+              </div>
+              <div class="auth-inline-error" id="login-email-error"></div>
+            </div>
+
+            <div class="auth-form-group">
+              <label for="login-password" class="auth-label">Password (min 8 characters)</label>
+              <div class="auth-input-wrapper">
+                <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="auth-toggle-pwd" data-target-input="login-password" aria-label="Toggle password visibility">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="auth-inline-error" id="login-password-error"></div>
+            </div>
+
+            <button type="submit" class="btn-auth-submit" id="btn-login-submit">Sign In to Dashboard</button>
+          </form>
+
+          <!-- Form 2: Sign Up (Initially Hidden) -->
+          <form id="form-signup" class="hidden" novalidate>
+            <div class="auth-form-group">
+              <label for="signup-name" class="auth-label">Developer Name</label>
+              <div class="auth-input-wrapper">
+                <input type="text" id="signup-name" class="auth-input" placeholder="Alex Rivera" autocomplete="name">
+              </div>
+              <div class="auth-inline-error" id="signup-name-error"></div>
+            </div>
+
+            <div class="auth-form-group">
+              <label for="signup-email" class="auth-label">Email Address</label>
+              <div class="auth-input-wrapper">
+                <input type="email" id="signup-email" class="auth-input" placeholder="developer@company.com" autocomplete="email">
+              </div>
+              <div class="auth-inline-error" id="signup-email-error"></div>
+            </div>
+
+            <div class="auth-form-group">
+              <label for="signup-password" class="auth-label">Password (min 8 characters)</label>
+              <div class="auth-input-wrapper">
+                <input type="password" id="signup-password" class="auth-input" placeholder="••••••••" autocomplete="new-password">
+                <button type="button" class="auth-toggle-pwd" data-target-input="signup-password" aria-label="Toggle password visibility">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="auth-inline-error" id="signup-password-error"></div>
+            </div>
+
+            <div class="auth-form-group">
+              <label for="signup-confirm-password" class="auth-label">Confirm Password</label>
+              <div class="auth-input-wrapper">
+                <input type="password" id="signup-confirm-password" class="auth-input" placeholder="••••••••" autocomplete="new-password">
+                <button type="button" class="auth-toggle-pwd" data-target-input="signup-confirm-password" aria-label="Toggle password visibility">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="auth-inline-error" id="signup-confirm-password-error"></div>
+            </div>
+
+            <button type="submit" class="btn-auth-submit" id="btn-signup-submit">Create Prototype Account</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <!-- Landing Footer -->
+    <footer class="landing-footer">
+      <div>CodeReflex &bull; Engineered for developers building muscle memory.</div>
+      <div>Prototype v0.1 &bull; Vanilla JS &amp; CSS</div>
+    </footer>
+  </div>
+
+  <!-- ==========================================================================
+       VIEW 2: AUTHENTICATED PRACTICE DASHBOARD (Protected by Auth Gate)
+       ========================================================================== -->
+  <div class="app-container hidden" id="app-view">
     <!-- Main Application Header -->
     <header class="app-header">
       <div class="header-left">
@@ -39,27 +419,54 @@
           <button class="mode-tab" data-mode="build" title="Type HTML/CSS code and watch the component render live">
             <span>Type-to-Build</span>
           </button>
+          <button class="mode-tab" data-mode="level1" title="Level 1: Three progressive parts with 95% accuracy requirement">
+            <span>Level 1</span>
+          </button>
         </nav>
       </div>
 
       <div class="header-center">
-        <!-- Language Selector -->
-        <div class="header-select-group">
-          <label for="header-lang-select" class="header-select-label">Lang</label>
-          <select id="header-lang-select" class="select-control">
-            <option value="javascript">JavaScript</option>
-            <option value="python">Python</option>
-            <option value="html">HTML</option>
-            <option value="css">CSS</option>
-          </select>
+        <!-- Standard Selectors (Normal, Code, Build modes) -->
+        <div class="header-standard-selectors" id="header-standard-controls">
+          <!-- Language Selector -->
+          <div class="header-select-group">
+            <label for="header-lang-select" class="header-select-label">Lang</label>
+            <select id="header-lang-select" class="select-control">
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="html">HTML</option>
+              <option value="css">CSS</option>
+            </select>
+          </div>
+
+          <!-- Challenge Picker -->
+          <div class="header-select-group">
+            <label for="header-challenge-select" class="header-select-label">Snippet</label>
+            <select id="header-challenge-select" class="select-control">
+              <!-- Dynamically populated from challenges.js -->
+            </select>
+          </div>
         </div>
 
-        <!-- Challenge Picker -->
-        <div class="header-select-group">
-          <label for="header-challenge-select" class="header-select-label">Snippet</label>
-          <select id="header-challenge-select" class="select-control">
-            <!-- Dynamically populated from challenges.js -->
-          </select>
+        <!-- Level 1 Stepper Controls (Sequential parts with 95% accuracy unlock) -->
+        <div class="level-parts-stepper hidden" id="level-parts-stepper" aria-label="Level 1 Sequential Parts">
+          <button type="button" class="level-part-btn active" data-level-part="1" id="level-part-btn-1" title="Part 1: HTML Structure">
+            <span class="part-badge">Part 1</span>
+            <span class="part-name">HTML</span>
+            <span class="part-status-icon" id="part-icon-1">Available</span>
+          </button>
+          <div class="stepper-connector" id="stepper-connector-1"></div>
+          <button type="button" class="level-part-btn part-locked" data-level-part="2" id="level-part-btn-2" title="Part 2: CSS Styling (Requires 95% on Part 1)">
+            <span class="part-badge">Part 2</span>
+            <span class="part-name">CSS</span>
+            <span class="part-status-icon" id="part-icon-2">🔒</span>
+          </button>
+          <div class="stepper-connector" id="stepper-connector-2"></div>
+          <button type="button" class="level-part-btn part-locked" data-level-part="3" id="level-part-btn-3" title="Part 3: Complete Design (Requires 95% on Part 2)">
+            <span class="part-badge">Part 3</span>
+            <span class="part-name">Design</span>
+            <span class="part-status-icon" id="part-icon-3">🔒</span>
+          </button>
         </div>
       </div>
 
@@ -79,6 +486,18 @@
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
           <span>Settings</span>
+        </button>
+
+        <!-- Authenticated User Profile Pill & Logout Button -->
+        <div class="header-user-badge" id="header-user-badge" title="Authenticated Profile">
+          <span class="header-user-dot"></span>
+          <span id="header-user-email">dev@codereflex.io</span>
+        </div>
+        <button class="header-btn btn-logout" id="header-logout-btn" title="Sign out of CodeReflex">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          <span>Logout</span>
         </button>
       </div>
     </header>
@@ -151,6 +570,9 @@
           <h2 class="completion-title" id="result-challenge-title">Debounce Utility</h2>
           <div class="completion-sub"><span id="result-challenge-lang">JAVASCRIPT</span> &bull; Performance Recorded</div>
         </div>
+
+        <!-- Level System Target Accuracy Notification -->
+        <div class="completion-level-target" id="result-level-target" style="display:none; margin-bottom:18px; font-size:12px; padding:10px 14px; border-radius:6px; line-height:1.5;"></div>
 
         <!-- Primary Big Metrics -->
         <div class="results-grid">
@@ -341,4 +763,3 @@
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
-

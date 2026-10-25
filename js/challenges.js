@@ -313,6 +313,189 @@ class LRUCache:
   },
 
   // ==========================================
+  // LEVEL 1: PROGRESSIVE 3-PART CHALLENGE
+  // Target Accuracy: 95%
+  // ==========================================
+  {
+    id: 'level1-part1',
+    mode: 'level1',
+    level: 1,
+    part: 1,
+    language: 'html',
+    title: 'Part 1: HTML Structure',
+    difficulty: 'beginner',
+    targetAccuracy: 95,
+    description: 'Construct the semantic markup for a modern status badge component.',
+    previewType: 'html',
+    cssContext: `
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #090d14;
+        color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #111724;
+        border: 1px dashed #334155;
+        border-radius: 999px;
+        font-size: 13px;
+        color: #94a3b8;
+        min-width: 220px;
+        box-sizing: border-box;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #64748b;
+      }
+      .status-count {
+        font-family: monospace;
+        font-size: 11px;
+        opacity: 0.7;
+      }
+    `,
+    code: `<div class="status-pill">
+  <span class="status-dot"></span>
+  <span class="status-label">System Active</span>
+  <span class="status-count">99.9%</span>
+</div>`
+  },
+  {
+    id: 'level1-part2',
+    mode: 'level1',
+    level: 1,
+    part: 2,
+    language: 'css',
+    title: 'Part 2: CSS Styling',
+    difficulty: 'beginner',
+    targetAccuracy: 95,
+    description: 'Apply modern emerald colors, pill border radius, and glowing styling to the status badge.',
+    previewType: 'css',
+    htmlContext: `
+      <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#090d14; font-family:system-ui, sans-serif;">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span class="status-label">System Active</span>
+          <span class="status-count">99.9%</span>
+        </div>
+      </div>
+    `,
+    code: `.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 999px;
+  color: #34d399;
+  font-size: 13px;
+  font-weight: 500;
+}`
+  },
+  {
+    id: 'level1-part3',
+    mode: 'level1',
+    level: 1,
+    part: 3,
+    language: 'html',
+    title: 'Part 3: Complete Design',
+    difficulty: 'intermediate',
+    targetAccuracy: 95,
+    description: 'Assemble the complete production system alert card with live telemetry and interactive action.',
+    previewType: 'live-component',
+    baseStyles: `
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #090d14;
+        color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .status-card {
+        background: #111726;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        min-width: 320px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+      }
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .dot-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 10px #10b981;
+      }
+      .service-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #f8fafc;
+      }
+      .status-telemetry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .latency {
+        font-family: monospace;
+        font-size: 12px;
+        color: #34d399;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .action-btn {
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #cbd5e1;
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .action-btn:hover {
+        background: #334155;
+        color: #ffffff;
+      }
+    `,
+    code: `<div class="status-card">
+  <div class="status-indicator">
+    <span class="dot-pulse"></span>
+    <span class="service-name">API Gateway</span>
+  </div>
+  <div class="status-telemetry">
+    <span class="latency">24ms</span>
+    <button type="button" class="action-btn">Inspect</button>
+  </div>
+</div>`
+  },
+
+  // ==========================================
   // MODE: TYPE-TO-BUILD (Mode C)
   // Components rendered live as user types!
   // ==========================================

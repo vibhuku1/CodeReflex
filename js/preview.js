@@ -101,8 +101,8 @@ export class PreviewManager {
 
     const tabTitle = this.container.querySelector('#preview-tab-title');
     if (tabTitle) {
-      if (challenge.mode === 'build') {
-        tabTitle.textContent = 'Live Component';
+      if (challenge.mode === 'build' || challenge.mode === 'level1') {
+        tabTitle.textContent = challenge.mode === 'level1' ? 'Level 1 Component' : 'Live Component';
       } else if (challenge.language === 'javascript' || challenge.language === 'python') {
         tabTitle.textContent = 'Simulated Console';
       } else if (challenge.mode === 'normal') {
@@ -223,7 +223,7 @@ export class PreviewManager {
     const mode = this.currentChallenge.mode;
     const pType = this.currentChallenge.previewType;
 
-    if (mode === 'build' || pType === 'html' || pType === 'css') {
+    if (mode === 'build' || mode === 'level1' || pType === 'html' || pType === 'css' || pType === 'live-component') {
       contentArea.innerHTML = `
         <div class="iframe-container">
           <iframe id="preview-sandbox-iframe" sandbox="allow-same-origin" title="Live Preview"></iframe>
@@ -269,9 +269,14 @@ export class PreviewManager {
 
     if (isShowingTarget) {
       // 1. Full Completed Target Design
-      if (this.currentChallenge.mode === 'build') {
-        htmlToRender = this.currentChallenge.code;
-        cssToRender = this.currentChallenge.baseStyles || '';
+      if (this.currentChallenge.mode === 'build' || this.currentChallenge.mode === 'level1') {
+        if (this.currentChallenge.language === 'css') {
+          htmlToRender = this.currentChallenge.htmlContext || '';
+          cssToRender = this.currentChallenge.code;
+        } else {
+          htmlToRender = this.currentChallenge.code;
+          cssToRender = this.currentChallenge.baseStyles || this.currentChallenge.cssContext || '';
+        }
       } else if (this.currentChallenge.previewType === 'html') {
         htmlToRender = this.currentChallenge.code;
         cssToRender = this.currentChallenge.cssContext || '';
@@ -281,9 +286,14 @@ export class PreviewManager {
       }
     } else {
       // 2. Progressive Live Build from User's Typed Code
-      if (this.currentChallenge.mode === 'build') {
-        cssToRender = this.currentChallenge.baseStyles || '';
-        htmlToRender = this.sanitizeAndCloseHtml(this.currentTypedText);
+      if (this.currentChallenge.mode === 'build' || this.currentChallenge.mode === 'level1') {
+        if (this.currentChallenge.language === 'css') {
+          htmlToRender = this.currentChallenge.htmlContext || '';
+          cssToRender = this.sanitizePartialCss(this.currentTypedText);
+        } else {
+          cssToRender = this.currentChallenge.baseStyles || this.currentChallenge.cssContext || '';
+          htmlToRender = this.sanitizeAndCloseHtml(this.currentTypedText);
+        }
       } else if (this.currentChallenge.previewType === 'html') {
         cssToRender = this.currentChallenge.cssContext || '';
         htmlToRender = this.sanitizeAndCloseHtml(this.currentTypedText);

@@ -47,16 +47,30 @@
   padding: 0;
 }
 
-html, body {
-  height: 100%;
+html {
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
   width: 100%;
-  background-color: var(--bg-canvas);
+  background-color: #070a0f;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Practice Dashboard Viewport Lock (Authenticated workspace) */
+body.in-app {
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -171,6 +185,91 @@ body.resizing {
 }
 
 /* Header Dropdowns and Selects */
+.header-standard-selectors {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.level-parts-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+}
+
+.level-part-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.level-part-btn:hover:not(:disabled) {
+  background-color: var(--bg-surface-elevated);
+  color: var(--text-primary);
+}
+
+.level-part-btn.active {
+  background-color: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.level-part-btn.part-completed {
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.25);
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+.level-part-btn.part-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.part-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.part-name {
+  font-weight: 600;
+}
+
+.part-status-icon {
+  font-size: 11px;
+}
+
+.stepper-connector {
+  width: 12px;
+  height: 2px;
+  background-color: var(--border-subtle);
+  border-radius: 1px;
+}
+
+.stepper-connector.passed {
+  background-color: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
 .header-select-group {
   display: flex;
   align-items: center;

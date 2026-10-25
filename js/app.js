@@ -10,6 +10,7 @@ import { PreviewManager } from './preview.js';
 import { StorageManager } from './storage.js';
 import { ModalManager } from './modals.js';
 import { soundPlayer } from './sound.js';
+import { AuthManager } from './auth.js';
 
 class CodeReflexApp {
   constructor() {
@@ -23,6 +24,7 @@ class CodeReflexApp {
 
     this.initDOMRefs();
     this.initModules();
+    this.initAuth();
     this.bindEvents();
     this.initSplitPaneResizer();
     this.applySettingsToUI();
@@ -39,6 +41,9 @@ class CodeReflexApp {
       challengeSelect: document.querySelector('#header-challenge-select'),
       progressBtn: document.querySelector('#header-progress-btn'),
       settingsBtn: document.querySelector('#header-settings-btn'),
+      headerStandardControls: document.querySelector('#header-standard-controls'),
+      levelStepper: document.querySelector('#level-parts-stepper'),
+      levelPartBtns: document.querySelectorAll('.level-part-btn'),
 
       // Live Stats
       statWpm: document.querySelector('#stat-wpm-value'),
@@ -50,6 +55,8 @@ class CodeReflexApp {
       progressPercent: document.querySelector('#stat-progress-percent'),
 
       // Containers
+      appView: document.querySelector('#app-view'),
+      landingView: document.querySelector('#landing-view'),
       editorContainer: document.querySelector('#editor-pane-container'),
       previewContainer: document.querySelector('#preview-pane-container'),
       splitResizer: document.querySelector('#split-pane-resizer'),
@@ -108,6 +115,18 @@ class CodeReflexApp {
     });
   }
 
+  initAuth() {
+    this.auth = new AuthManager({
+      onLoginSuccess: (user) => {
+        this.restartCurrentChallenge();
+        setTimeout(() => this.editor.focus(), 120);
+      },
+      onLogout: () => {
+        this.restartCurrentChallenge();
+      }
+    });
+  }
+
   bindEvents() {
     // Mode tabs
     this.dom.modeTabs.forEach(tab => {
@@ -132,6 +151,16 @@ class CodeReflexApp {
       this.editor.focus();
     });
 
+    // Level 1 parts stepper click
+    if (this.dom.levelPartBtns) {
+      this.dom.levelPartBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const partNum = parseInt(btn.dataset.levelPart, 10);
+          this.handleLevelPartSelect(partNum);
+        });
+      });
+    }
+
     // Header buttons
     this.dom.progressBtn.addEventListener('click', () => {
       this.modals.showProgress();
@@ -143,6 +172,14 @@ class CodeReflexApp {
 
     // Global keyboard shortcuts and auto-focus capture
     window.addEventListener('keydown', (e) => {
+      // Guard: Do not capture typing if unauthenticated or on landing page
+      if (!this.auth || !this.auth.isAuthenticated()) {
+        return;
+      }
+      if (this.dom.appView && this.dom.appView.classList.contains('hidden')) {
+        return;
+      }
+
       const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
       const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
       const isInputActive = ['input', 'select', 'textarea', 'button'].includes(activeTag);
@@ -182,11 +219,84 @@ class CodeReflexApp {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
 
-    // Adapt available languages for mode
-    this.updateLanguageOptionsForMode(mode);
-    this.populateChallengeList();
-    this.loadFirstAvailableChallenge();
+    if (mode === 'level1') {
+      if (this.dom.headerStandardControls) this.dom.headerStandardControls.classList.add('hidden');
+      if (this.dom.levelStepper) this.dom.levelStepper.classList.remove('hidden');
+      this.loadCurrentLevelPart();
+    } else {
+      if (this.dom.headerStandardControls) this.dom.headerStandardControls.classList.remove('hidden');
+      if (this.dom.levelStepper) this.dom.levelStepper.classList.add('hidden');
+      this.updateLanguageOptionsForMode(mode);
+      this.populateChallengeList();
+      this.loadFirstAvailableChallenge();
+    }
     this.editor.focus();
+  }
+
+  updateLevelStepper() {
+    const progressData = StorageManager.getLevelProgress();
+    const progress = (progressData && progressData.level1) ? progressData.level1 : { unlockedPart: 1, parts: {} };
+    const unlockedPart = progress.unlockedPart || 1;
+    const currentPart = (this.activeChallenge && this.activeChallenge.mode === 'level1')
+      ? (this.activeChallenge.part || 1)
+      : unlockedPart;
+
+    if (this.dom.levelPartBtns) {
+      this.dom.levelPartBtns.forEach(btn => {
+        const partNum = parseInt(btn.dataset.levelPart, 10);
+        const isCompleted = progress.parts && progress.parts[partNum] && progress.parts[partNum].completed;
+        const isUnlocked = partNum <= unlockedPart;
+        const isActive = (partNum === currentPart && this.currentMode === 'level1');
+
+        btn.classList.toggle('active', isActive);
+        btn.classList.toggle('part-completed', !!isCompleted);
+        btn.classList.toggle('part-locked', !isUnlocked);
+        btn.disabled = !isUnlocked;
+
+        const iconEl = btn.querySelector('.part-status-icon');
+        if (iconEl) {
+          if (isCompleted) {
+            iconEl.textContent = '✓';
+            iconEl.title = `Completed with ${progress.parts[partNum].bestAccuracy}% accuracy`;
+          } else if (isUnlocked) {
+            iconEl.textContent = isActive ? 'Active' : 'Open';
+            iconEl.title = 'Available to practice';
+          } else {
+            iconEl.textContent = '🔒';
+            iconEl.title = `Locked (Achieve ≥ 95% on Part ${partNum - 1} to unlock)`;
+          }
+        }
+      });
+    }
+
+    // Update connector lines
+    const conn1 = document.querySelector('#stepper-connector-1');
+    const conn2 = document.querySelector('#stepper-connector-2');
+    if (conn1) conn1.classList.toggle('passed', !!(progress.parts && progress.parts[1] && progress.parts[1].completed));
+    if (conn2) conn2.classList.toggle('passed', !!(progress.parts && progress.parts[2] && progress.parts[2].completed));
+  }
+
+  handleLevelPartSelect(partNum) {
+    const progressData = StorageManager.getLevelProgress();
+    const progress = (progressData && progressData.level1) ? progressData.level1 : { unlockedPart: 1, parts: {} };
+    const unlockedPart = progress.unlockedPart || 1;
+
+    if (partNum > unlockedPart) {
+      // Locked part!
+      return;
+    }
+
+    this.loadChallenge(`level1-part${partNum}`);
+    this.updateLevelStepper();
+    this.editor.focus();
+  }
+
+  loadCurrentLevelPart() {
+    const progressData = StorageManager.getLevelProgress();
+    const progress = (progressData && progressData.level1) ? progressData.level1 : { unlockedPart: 1, parts: {} };
+    const partNum = Math.min(3, progress.unlockedPart || 1);
+    this.loadChallenge(`level1-part${partNum}`);
+    this.updateLevelStepper();
   }
 
   updateLanguageOptionsForMode(mode) {
@@ -273,6 +383,10 @@ class CodeReflexApp {
 
     // Reset stats displays
     this.updateStatsDisplay(this.engine.getMetrics());
+
+    if (challenge.mode === 'level1') {
+      this.updateLevelStepper();
+    }
   }
 
   restartCurrentChallenge() {
@@ -285,6 +399,20 @@ class CodeReflexApp {
   }
 
   goToNextChallenge() {
+    if (this.activeChallenge && this.activeChallenge.mode === 'level1') {
+      const progressData = StorageManager.getLevelProgress();
+      const progress = (progressData && progressData.level1) ? progressData.level1 : { unlockedPart: 1, parts: {} };
+      const currentPart = this.activeChallenge.part || 1;
+      const unlockedPart = progress.unlockedPart || 1;
+
+      if (currentPart < 3 && currentPart < unlockedPart) {
+        this.handleLevelPartSelect(currentPart + 1);
+      } else {
+        this.restartCurrentChallenge();
+      }
+      return;
+    }
+
     const list = getChallengesByFilter(this.currentMode, this.currentLanguage);
     if (list.length <= 1) {
       this.restartCurrentChallenge();
@@ -308,6 +436,21 @@ class CodeReflexApp {
   }
 
   handleChallengeComplete(metrics) {
+    let isLevel = false;
+    let passedTarget = false;
+
+    if (this.activeChallenge && this.activeChallenge.mode === 'level1') {
+      isLevel = true;
+      const partNum = this.activeChallenge.part || 1;
+      const targetAcc = this.activeChallenge.targetAccuracy || 95;
+      passedTarget = (metrics.accuracy >= targetAcc);
+
+      if (passedTarget) {
+        StorageManager.recordLevelPartCompletion('level1', partNum, metrics.wpm, metrics.accuracy);
+      }
+      this.updateLevelStepper();
+    }
+
     // Record session in history
     StorageManager.recordSession({
       challengeId: this.activeChallenge.id,
@@ -325,7 +468,11 @@ class CodeReflexApp {
     this.preview.update(100, this.engine.targetText);
 
     // Trigger celebration modal
-    this.modals.showCompletion(metrics, this.activeChallenge);
+    this.modals.showCompletion(metrics, this.activeChallenge, {
+      isLevelMode: isLevel,
+      targetAccuracy: 95,
+      passedTarget
+    });
   }
 
   applySettingsToUI() {
