@@ -578,12 +578,13 @@ export async function syncUserProfile(user) {
 
   try {
     const fetchWithTimeout = new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(null), 1500);
+      const timer = setTimeout(() => resolve(null), 3500);
       modules.getDoc(userRef).then(snap => {
         clearTimeout(timer);
         resolve(snap);
-      }).catch(() => {
+      }).catch(err => {
         clearTimeout(timer);
+        console.warn('[CodeReflex Firestore] syncUserProfile getDoc notice:', err.code || err.message);
         resolve(null);
       });
     });
@@ -610,38 +611,47 @@ export async function syncUserProfile(user) {
       profileData.createdAt = modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString();
     }
 
-    modules.setDoc(userRef, profileData, { merge: true }).catch(err => {
-      console.warn('Background Firestore profile save notice:', err.message);
+    await modules.setDoc(userRef, profileData, { merge: true }).catch(err => {
+      console.warn('[CodeReflex Firestore] Background profile save warning:', err.code || err.message);
     });
 
     return { ...existingData, ...profileData };
   } catch (err) {
-    console.warn('Firestore profile sync error (offline or permission):', err);
+    console.warn('[CodeReflex Firestore] Profile sync error:', err.code || err.message, err);
     return null;
   }
 }
 
 /**
- * Saves a completed challenge session and updated level telemetry to Firestore.
+ * Saves a completed challenge session, level progression, and leaderboard metrics to Firestore.
  */
-export async function saveUserProgress(uid, sessionData, levelProgress, progressionV2 = null) {
-  if (!uid || !isFirebaseConfigured()) return;
+export async function saveUserProgress(uid, sessionData, levelProgress = null, progressionV2 = null) {
+  if (!uid || !isFirebaseConfigured()) return { success: false, reason: 'unconfigured_or_no_uid' };
 
   const services = await getFirebaseServices();
-  if (!services.configured || !services.db) return;
+  if (!services.configured || !services.db) return { success: false, reason: 'services_unavailable' };
 
   const { db, modules } = services;
   const userRef = modules.doc(db, 'users', uid);
 
+  // Handle argument flexibility (if progressionV2 was passed in 3rd position)
+  let actualLevelProgress = levelProgress;
+  let actualProgressionV2 = progressionV2;
+  if (levelProgress && levelProgress.languages && !progressionV2) {
+    actualProgressionV2 = levelProgress;
+    actualLevelProgress = null;
+  }
+
   try {
-    // 1. Fetch current metrics to compute incremental aggregates
+    // 1. Fetch current user metrics with timeout
     const fetchWithTimeout = new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(null), 1500);
+      const timer = setTimeout(() => resolve(null), 3500);
       modules.getDoc(userRef).then(snap => {
         clearTimeout(timer);
         resolve(snap);
-      }).catch(() => {
+      }).catch(err => {
         clearTimeout(timer);
+        console.warn('[CodeReflex Firestore] saveUserProgress fetch notice:', err.code || err.message);
         resolve(null);
       });
     });
@@ -658,23 +668,41 @@ export async function saveUserProgress(uid, sessionData, levelProgress, progress
     const prevAvgAcc = currentData.averageAccuracy || 100;
     const newAvgAcc = Math.round(((prevAvgAcc * prevCompleted) + (sessionData.accuracy || 100)) / newCompleted);
 
-    const unlockedPart = (levelProgress && levelProgress.level1 && levelProgress.level1.unlockedPart)
-      ? levelProgress.level1.unlockedPart
+    const unlockedPart = (actualLevelProgress && actualLevelProgress.level1 && actualLevelProgress.level1.unlockedPart)
+      ? actualLevelProgress.level1.unlockedPart
       : (currentData.currentPart || 1);
 
-    // Update parent user profile document
-    modules.setDoc(userRef, {
+    // Resolve user identifiers for profile & leaderboard
+    const authUser = services.auth?.currentUser;
+    const userEmail = currentData.email || authUser?.email || '';
+    const userDisplayName = currentData.displayName || authUser?.displayName || (userEmail ? userEmail.split('@')[0] : 'Coder');
+    const userPhotoURL = currentData.photoURL !== undefined ? currentData.photoURL : (authUser?.photoURL || null);
+
+    const profilePayload = {
+      displayName: userDisplayName,
+      email: userEmail,
+      photoURL: userPhotoURL,
       bestWpm: newBestWpm,
       averageAccuracy: newAvgAcc,
       completedChallenges: newCompleted,
       currentLevel: 1,
       currentPart: unlockedPart,
       updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-    }, { merge: true }).catch(() => {});
+    };
 
-    // 2. Write to subcollection: users/{uid}/history/{sessionId}
+    if (!docSnap || !docSnap.exists()) {
+      profilePayload.createdAt = modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString();
+      profilePayload.lastLoginAt = profilePayload.createdAt;
+    }
+
+    const writeTasks = [];
+
+    // Task 1: Update main user document
+    writeTasks.push(modules.setDoc(userRef, profilePayload, { merge: true }));
+
+    // Task 2: Write session telemetry to users/{uid}/history/{sessionId}
     const sessionRef = modules.doc(db, 'users', uid, 'history', sessionData.id || `sess_${Date.now()}`);
-    modules.setDoc(sessionRef, {
+    writeTasks.push(modules.setDoc(sessionRef, {
       challengeId: sessionData.challengeId,
       title: sessionData.title,
       language: sessionData.language,
@@ -685,29 +713,50 @@ export async function saveUserProgress(uid, sessionData, levelProgress, progress
       elapsedSeconds: sessionData.elapsedSeconds,
       errorCount: sessionData.errorCount,
       completedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-    }).catch(() => {});
+    }));
 
-    // 3. Write to subcollection: users/{uid}/progress/level1
-    if (levelProgress && levelProgress.level1) {
+    // Task 3: Write level progress to users/{uid}/progress/level1 (if present)
+    if (actualLevelProgress && actualLevelProgress.level1) {
       const levelRef = modules.doc(db, 'users', uid, 'progress', 'level1');
-      modules.setDoc(levelRef, {
-        unlockedPart: levelProgress.level1.unlockedPart || 1,
-        parts: levelProgress.level1.parts || {},
+      writeTasks.push(modules.setDoc(levelRef, {
+        unlockedPart: actualLevelProgress.level1.unlockedPart || 1,
+        parts: actualLevelProgress.level1.parts || {},
         updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      }, { merge: true }));
     }
 
-    // 4. Write to subcollection: users/{uid}/progression/v2 (Multi-language 70-level progress)
-    if (progressionV2 && progressionV2.languages) {
+    // Task 4: Write 70-level progression to users/{uid}/progression/v2 (if present)
+    if (actualProgressionV2 && actualProgressionV2.languages) {
       const progRef = modules.doc(db, 'users', uid, 'progression', 'v2');
-      modules.setDoc(progRef, {
+      writeTasks.push(modules.setDoc(progRef, {
         version: 2,
-        languages: progressionV2.languages,
+        languages: actualProgressionV2.languages,
         updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      }, { merge: true }));
     }
+
+    // Task 5: Write to dedicated public leaderboard collection (leaderboard/{uid})
+    // Only non-sensitive approved stats (NO email or private progress)
+    if (newBestWpm > 0) {
+      const lbRef = modules.doc(db, 'leaderboard', uid);
+      writeTasks.push(modules.setDoc(lbRef, {
+        userId: uid,
+        displayName: userDisplayName,
+        photoURL: userPhotoURL,
+        bestWpm: newBestWpm,
+        averageAccuracy: newAvgAcc,
+        completedChallenges: newCompleted,
+        updatedAt: modules.serverTimestamp ? modules.serverTimestamp() : new Date().toISOString()
+      }, { merge: true }));
+    }
+
+    // Wait for all writes to complete
+    await Promise.all(writeTasks);
+    console.log('[CodeReflex Firestore] Successfully persisted user progress & leaderboard for:', uid);
+    return { success: true };
   } catch (err) {
-    console.warn('Failed to save user progress to Firestore (offline/permission):', err);
+    console.warn('[CodeReflex Firestore] Failed to save user progress:', err.code || err.message, err);
+    return { success: false, error: err };
   }
 }
 
@@ -728,7 +777,10 @@ export async function loadUserProgress(uid) {
     const progRef = modules.doc(db, 'users', uid, 'progression', 'v2');
 
     const fetchWithTimeout = new Promise((resolve) => {
-      const timer = setTimeout(() => resolve(null), 1500);
+      const timer = setTimeout(() => {
+        console.warn('[CodeReflex Firestore] loadUserProgress timed out after 3500ms');
+        resolve(null);
+      }, 3500);
       Promise.all([
         modules.getDoc(userRef),
         modules.getDoc(levelRef),
@@ -736,8 +788,9 @@ export async function loadUserProgress(uid) {
       ]).then(snaps => {
         clearTimeout(timer);
         resolve(snaps);
-      }).catch(() => {
+      }).catch(err => {
         clearTimeout(timer);
+        console.warn('[CodeReflex Firestore] loadUserProgress fetch error:', err.code || err.message);
         resolve(null);
       });
     });
@@ -753,8 +806,60 @@ export async function loadUserProgress(uid) {
       progression: progSnap && progSnap.exists() ? progSnap.data() : null
     };
   } catch (err) {
-    console.warn('Failed to load user progress from Firestore:', err);
+    console.warn('[CodeReflex Firestore] Failed to load user progress:', err.code || err.message, err);
     return null;
+  }
+}
+
+/**
+ * Reads public rankings from the dedicated public leaderboard collection.
+ * Exposes only approved non-sensitive fields.
+ */
+export async function loadLeaderboard(limitCount = 20) {
+  if (!isFirebaseConfigured()) {
+    const res = [];
+    res.success = false;
+    res.unconfigured = true;
+    return res;
+  }
+
+  const services = await getFirebaseServices();
+  if (!services.configured || !services.db) {
+    const res = [];
+    res.success = false;
+    res.unconfigured = true;
+    return res;
+  }
+
+  const { db, modules } = services;
+
+  try {
+    const lbCol = modules.collection(db, 'leaderboard');
+    let q = lbCol;
+    if (modules.query && modules.orderBy && modules.limit) {
+      q = modules.query(lbCol, modules.orderBy('bestWpm', 'desc'), modules.limit(limitCount));
+    }
+    const snap = await modules.getDocs(q);
+    const leaders = [];
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      leaders.push({
+        userId: data.userId || docSnap.id,
+        displayName: data.displayName || 'Coder',
+        photoURL: data.photoURL || null,
+        bestWpm: data.bestWpm || 0,
+        averageAccuracy: data.averageAccuracy || 0,
+        completedChallenges: data.completedChallenges || 0
+      });
+    });
+    leaders.success = true;
+    return leaders;
+  } catch (err) {
+    console.warn('[CodeReflex Firestore] loadLeaderboard error:', err.code || err.message);
+    const res = [];
+    res.success = false;
+    res.error = err.code || err.message;
+    return res;
   }
 }
 

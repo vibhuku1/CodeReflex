@@ -51,6 +51,7 @@ export class LevelController {
     if (this.headerTrackSelect) {
       this.headerTrackSelect.addEventListener('change', (e) => {
         this.currentTrack = e.target.value;
+        StorageManager.setActiveLanguage(this.currentTrack);
         this.updateHeaderStatus();
       });
     }
@@ -122,6 +123,7 @@ export class LevelController {
 
   switchTrack(language) {
     this.currentTrack = (language || 'html').toLowerCase();
+    StorageManager.setActiveLanguage(this.currentTrack);
     if (this.headerTrackSelect) this.headerTrackSelect.value = this.currentTrack;
 
     if (this.trackTabs) {
@@ -273,7 +275,7 @@ export class LevelController {
           </div>
           <div class="level-overview-stats">
             <span><strong>${status.completedCount} / 30</strong> Challenges Completed</span>
-            <span class="level-pass-target">Target: ≥ 95% Accuracy</span>
+            <span class="level-pass-target">Complete 30 to Unlock Next</span>
           </div>
         </div>
         <h2 class="level-overview-title">${meta.title}</h2>
@@ -317,7 +319,7 @@ export class LevelController {
           ${isCompleted ? `
             <span class="slot-stats">Best: <strong>${chStatus.bestWpm} WPM</strong> • <strong>${chStatus.bestAccuracy}% Acc</strong></span>
           ` : `
-            <span class="slot-target">95% Accuracy Target</span>
+            <span class="slot-target">Complete to Advance</span>
           `}
         </div>
       `;

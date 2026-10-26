@@ -60,7 +60,7 @@ export class ModalManager {
     modal.querySelector('#result-challenge-title').textContent = challenge.title;
     modal.querySelector('#result-challenge-lang').textContent = challenge.language.toUpperCase();
 
-    // Check Level Mode specific target criteria (e.g. 95% target accuracy)
+    // Check Level Mode specific completion state
     const levelTargetEl = modal.querySelector('#result-level-target');
     const nextBtn = modal.querySelector('#result-next-btn');
     const nextBtnSpan = nextBtn ? nextBtn.querySelector('span:first-child') : null;
@@ -68,30 +68,19 @@ export class ModalManager {
     if (levelMeta && levelMeta.isLevelMode) {
       if (levelTargetEl) {
         levelTargetEl.style.display = 'block';
-        if (levelMeta.passedTarget) {
-          levelTargetEl.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
-          levelTargetEl.style.color = '#34d399';
-          levelTargetEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-          const nextText = levelMeta.isProgressionV2
-            ? `Challenge #${challenge.challengeIndex || 1} passed with ${metrics.accuracy}% accuracy! Slot progress recorded.`
-            : (challenge.part < 3 ? `Part ${challenge.part} passed with ${metrics.accuracy}% accuracy! Part ${challenge.part + 1} is now unlocked.` : `Level 1 Mastered! All 3 parts completed with ${metrics.accuracy}% accuracy!`);
-          levelTargetEl.innerHTML = `<strong>✓ Target Met (≥ 95% Accuracy):</strong> ${nextText}`;
-        } else {
-          levelTargetEl.style.backgroundColor = 'rgba(244, 63, 94, 0.15)';
-          levelTargetEl.style.color = '#f87171';
-          levelTargetEl.style.border = '1px solid rgba(244, 63, 94, 0.3)';
-          levelTargetEl.innerHTML = `<strong>⚠ Accuracy Target: 95% Required (Achieved: ${metrics.accuracy}%):</strong> Requires at least 95% accuracy to pass and unlock subsequent levels. Retry to master!`;
-        }
+        levelTargetEl.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+        levelTargetEl.style.color = '#34d399';
+        levelTargetEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+        const nextText = levelMeta.isProgressionV2
+          ? `Challenge #${challenge.challengeIndex || 1} completed (${metrics.accuracy}% accuracy)! Progress saved.`
+          : (challenge.part < 3 ? `Part ${challenge.part} completed (${metrics.accuracy}% accuracy)! Part ${challenge.part + 1} is now unlocked.` : `Level 1 Mastered! All 3 parts completed (${metrics.accuracy}% accuracy)!`);
+        levelTargetEl.innerHTML = `<strong>✓ Challenge Completed:</strong> ${nextText}`;
       }
 
       if (nextBtnSpan) {
-        if (levelMeta.passedTarget) {
-          nextBtnSpan.textContent = levelMeta.isProgressionV2
-            ? 'Continue Next Challenge'
-            : (challenge.part < 3 ? `Continue to Part ${challenge.part + 1}` : 'Level 1 Complete!');
-        } else {
-          nextBtnSpan.textContent = 'Retry (Need 95%)';
-        }
+        nextBtnSpan.textContent = levelMeta.isProgressionV2
+          ? 'Continue Next Challenge'
+          : (challenge.part < 3 ? `Continue to Part ${challenge.part + 1}` : 'Level 1 Complete!');
       }
     } else {
       if (levelTargetEl) levelTargetEl.style.display = 'none';

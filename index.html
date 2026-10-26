@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/editor.css">
   <link rel="stylesheet" href="css/preview.css">
   <link rel="stylesheet" href="css/landing.css">
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/dashboard.css?v=1.1">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
@@ -233,7 +233,7 @@
           <div class="section-label">Structured Progression</div>
           <h2 class="section-title">Level 1: Three Progressive Parts</h2>
           <p class="section-desc">
-            Complete sequential milestones to master coding fluency. Advance to the next part only upon achieving 95% typing accuracy.
+            Complete sequential milestones to master coding fluency. Advance to the next part upon completing each challenge.
           </p>
         </div>
 
@@ -247,7 +247,7 @@
           </div>
 
           <div class="feature-card">
-            <div class="part-badge" style="color:var(--accent-amber); margin-bottom:12px;">Part 2 • Requires 95% on Part 1</div>
+            <div class="part-badge" style="color:var(--accent-amber); margin-bottom:12px;">Part 2 • Complete Part 1 to Unlock</div>
             <h3 class="feature-card-title">CSS Styling</h3>
             <p class="feature-card-desc">
               Apply flexbox alignment, pill border-radius, emerald color tones, and glassmorphic styling live to the component.
@@ -255,7 +255,7 @@
           </div>
 
           <div class="feature-card">
-            <div class="part-badge" style="color:var(--accent-emerald); margin-bottom:12px;">Part 3 • Requires 95% on Part 2</div>
+            <div class="part-badge" style="color:var(--accent-emerald); margin-bottom:12px;">Part 3 • Complete Part 2 to Unlock</div>
             <h3 class="feature-card-title">Complete Design</h3>
             <p class="feature-card-desc">
               Assemble the finished production telemetry card with glowing pulse indicator and interactive inspection control.
@@ -503,15 +503,18 @@
             </div>
           </div>
 
-          <!-- Level Progress Card -->
+          <!-- Level Progress Card (Displays Highest Language Level) -->
           <div class="dash-level-card">
             <div class="dash-card-header-label">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <rect x="2" y="13" width="4" height="8" rx="1"></rect>
-                <rect x="9" y="8" width="4" height="13" rx="1"></rect>
-                <rect x="16" y="3" width="4" height="18" rx="1"></rect>
-              </svg>
-              <span>Level</span>
+              <div class="dash-card-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="2" y="13" width="4" height="8" rx="1"></rect>
+                  <rect x="9" y="8" width="4" height="13" rx="1"></rect>
+                  <rect x="16" y="3" width="4" height="18" rx="1"></rect>
+                </svg>
+                <span>Level</span>
+              </div>
+              <span class="dash-highest-level-pill" id="dash-highest-level-pill">HTML · Level 1</span>
             </div>
 
             <div class="dash-ring-container">
@@ -520,8 +523,9 @@
                 <circle class="dash-ring-fill" id="dash-ring-fill" cx="60" cy="60" r="52"></circle>
               </svg>
               <div class="dash-ring-center-text">
-                <span class="dash-ring-value" id="dash-level-ring-value">18 / 70</span>
-                <span class="dash-ring-sub">Levels</span>
+                <span class="dash-ring-value" id="dash-level-ring-value">Level 1</span>
+                <span class="dash-ring-sub" id="dash-level-ring-sub">HTML</span>
+                <span class="dash-highest-level-display" id="dash-highest-level-display" style="display:none;">HTML · Level 1</span>
               </div>
             </div>
 
@@ -714,6 +718,33 @@
             </div>
             <div class="dash-weekly-chart-wrap" id="dash-weekly-chart-area">
               <!-- Dynamically populated by DashboardController -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Top 10 Coders Leaderboard Section -->
+        <section class="dash-leaderboard-section">
+          <div class="dash-panel dash-panel-leaderboard">
+            <div class="dash-panel-header">
+              <div class="dash-panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                  <path d="M4 22h16"></path>
+                  <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
+                  <path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34"></path>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                </svg>
+                <span>Top 10 Coders Leaderboard</span>
+              </div>
+              <button type="button" class="btn-dash-view-all" id="btn-dash-leaderboard-view-all" title="View all Top 10 coders">View All Top 10</button>
+            </div>
+            <div class="dash-leaderboard-body" id="dash-leaderboard-list">
+              <!-- Dynamically populated from Cloud Firestore -->
+              <div class="dash-lb-state">
+                <div class="dash-lb-spinner"></div>
+                <span>Loading leaderboard...</span>
+              </div>
             </div>
           </div>
         </section>
@@ -1155,6 +1186,6 @@
       }
     })();
   </script>
-  <script type="module" src="js/app.js?v=1.6"></script>
+  <script type="module" src="js/app.js?v=1.8"></script>
 </body>
 </html>

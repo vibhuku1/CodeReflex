@@ -314,7 +314,6 @@ class LRUCache:
 
   // ==========================================
   // LEVEL 1: PROGRESSIVE 3-PART CHALLENGE
-  // Target Accuracy: 95%
   // ==========================================
   {
     id: 'level1-part1',
@@ -324,7 +323,6 @@ class LRUCache:
     language: 'html',
     title: 'Part 1: HTML Structure',
     difficulty: 'beginner',
-    targetAccuracy: 95,
     description: 'Construct the semantic markup for a modern status badge component.',
     previewType: 'html',
     cssContext: `
@@ -378,7 +376,6 @@ class LRUCache:
     language: 'css',
     title: 'Part 2: CSS Styling',
     difficulty: 'beginner',
-    targetAccuracy: 95,
     description: 'Apply modern emerald colors, pill border radius, and glowing styling to the status badge.',
     previewType: 'css',
     htmlContext: `
@@ -411,7 +408,6 @@ class LRUCache:
     language: 'html',
     title: 'Part 3: Complete Design',
     difficulty: 'intermediate',
-    targetAccuracy: 95,
     description: 'Assemble the complete production system alert card with live telemetry and interactive action.',
     previewType: 'live-component',
     baseStyles: `

@@ -123,8 +123,7 @@ export function getLevelMeta(language, levelNum) {
       difficulty: tier.name.toLowerCase(),
       // Unimplemented slots are tracked cleanly
       status: 'unimplemented',
-      description: `Practice coding and typing proficiency for ${topicTitle} (Challenge #${ch} of Level ${lvl}).`,
-      targetAccuracy: 95
+      description: `Practice coding and typing proficiency for ${topicTitle} (Challenge #${ch} of Level ${lvl}).`
     });
   }
 

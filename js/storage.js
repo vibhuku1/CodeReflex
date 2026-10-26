@@ -154,12 +154,10 @@ export class StorageManager {
       lvl.parts[partNum] = { completed: false, bestWpm: 0, bestAccuracy: 0 };
     }
 
-    // Unlock next part if accuracy target of 95% is met
-    if (accuracy >= 95) {
-      lvl.parts[partNum].completed = true;
-      if (partNum < 3 && lvl.unlockedPart <= partNum) {
-        lvl.unlockedPart = partNum + 1;
-      }
+    // Completing the part unlocks the next part (no minimum accuracy threshold)
+    lvl.parts[partNum].completed = true;
+    if (partNum < 3 && lvl.unlockedPart <= partNum) {
+      lvl.unlockedPart = partNum + 1;
     }
 
     if (wpm > (lvl.parts[partNum].bestWpm || 0)) {
@@ -209,6 +207,7 @@ export class StorageManager {
     const initialProgression = {
       version: 2,
       schemaVersion: 2,
+      activeLanguage: 'html',
       languages: {
         html: { currentLevel: 1, unlockedLevel: 1, levels: {} },
         css: { currentLevel: 1, unlockedLevel: 1, levels: {} },
@@ -299,6 +298,63 @@ export class StorageManager {
     return state.languages[lang];
   }
 
+  static getActiveLanguage() {
+    const state = this.getProgressionState();
+    return (state.activeLanguage || 'html').toLowerCase();
+  }
+
+  static setActiveLanguage(language) {
+    if (!language) return;
+    const state = this.getProgressionState();
+    state.activeLanguage = language.toLowerCase();
+    this.saveProgressionState(state);
+  }
+
+  static getCurrentLevel(language) {
+    const prog = this.getLanguageProgression(language);
+    return prog.currentLevel || prog.unlockedLevel || 1;
+  }
+
+  static setCurrentLevel(language, levelNum) {
+    const state = this.getProgressionState();
+    const lang = (language || 'html').toLowerCase();
+    const lvl = parseInt(levelNum, 10);
+    if (!state.languages[lang]) {
+      state.languages[lang] = { currentLevel: 1, unlockedLevel: 1, levels: {} };
+    }
+    state.languages[lang].currentLevel = lvl;
+    this.saveProgressionState(state);
+  }
+
+  /**
+   * Compares the current levels of HTML, CSS, and JavaScript and returns
+   * the highest one with consistent tie-breaking (HTML > CSS > JavaScript).
+   */
+  static getHighestCurrentLevel() {
+    const state = this.getProgressionState();
+    const tracks = ['html', 'css', 'javascript'];
+    const trackNames = { html: 'HTML', css: 'CSS', javascript: 'JavaScript' };
+
+    let highestLevel = 1;
+    let highestLang = 'html';
+
+    for (const lang of tracks) {
+      const prog = state.languages?.[lang] || { currentLevel: 1, unlockedLevel: 1 };
+      const lvl = Math.max(prog.currentLevel || 1, prog.unlockedLevel || 1);
+      if (lvl > highestLevel) {
+        highestLevel = lvl;
+        highestLang = lang;
+      }
+    }
+
+    return {
+      language: highestLang,
+      languageName: trackNames[highestLang],
+      level: highestLevel,
+      displayText: `${trackNames[highestLang]} · Level ${highestLevel}`
+    };
+  }
+
   static getUnlockedLevel(language) {
     const prog = this.getLanguageProgression(language);
     return prog.unlockedLevel || 1;
@@ -384,10 +440,8 @@ export class StorageManager {
     chRecord.attempts = (chRecord.attempts || 0) + 1;
     chRecord.lastAttemptAt = new Date().toISOString();
 
-    // Accuracy target: 95% marks the challenge completed
-    if (accuracy >= 95) {
-      chRecord.completed = true;
-    }
+    // Completing the challenge marks it completed (no minimum accuracy threshold)
+    chRecord.completed = true;
 
     if (wpm > (chRecord.bestWpm || 0)) {
       chRecord.bestWpm = wpm;
@@ -414,6 +468,7 @@ export class StorageManager {
 
     langProg.currentLevel = lvl;
     langProg.currentChallengeIndex = ch;
+    state.activeLanguage = lang;
 
     this.saveProgressionState(state);
     return {

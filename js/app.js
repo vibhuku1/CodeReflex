@@ -10,7 +10,7 @@ import { PreviewManager } from './preview.js';
 import { StorageManager } from './storage.js';
 import { ModalManager } from './modals.js';
 import { soundPlayer } from './sound.js';
-import { AuthManager } from './auth.js?v=1.6';
+import { AuthManager } from './auth.js?v=1.7';
 import { LevelController } from './level-controller.js';
 import { loadLevelChallenges } from './challenge-loader.js';
 import { DashboardController } from './dashboard.js';
@@ -20,8 +20,8 @@ class CodeReflexApp {
     this.settings = StorageManager.getSettings();
     soundPlayer.enabled = this.settings.soundEnabled;
 
-    this.currentMode = 'code'; // 'normal' | 'code' | 'build' | 'levels' | 'level1'
-    this.currentLanguage = 'javascript'; // 'javascript' | 'python' | 'html' | 'css' | 'text'
+    this.currentMode = 'levels'; // 'normal' | 'code' | 'build' | 'levels' | 'level1'
+    this.currentLanguage = StorageManager.getActiveLanguage() || 'html'; // 'html' | 'css' | 'javascript' | 'python' | 'text'
     this.currentDifficulty = 'all';
     this.activeChallenge = null;
 
@@ -159,16 +159,23 @@ class CodeReflexApp {
           }
         } else if (target.language) {
           const track = target.language;
-          const level = target.level || 1;
+          const level = target.level || StorageManager.getCurrentLevel(track) || 1;
           this.currentLanguage = track;
           this.currentMode = 'levels';
+          StorageManager.setActiveLanguage(track);
+          StorageManager.setCurrentLevel(track, level);
           if (this.levelController) {
             this.levelController.switchTrack(track);
           }
           loadLevelChallenges(track, level).then(lvlData => {
-            const firstSlot = lvlData.challenges[0];
-            if (firstSlot) {
-              this.loadProgressionChallenge(firstSlot);
+            // Find first uncompleted challenge in this level, or first slot
+            const uncompleted = lvlData.challenges.find(c => {
+              const status = StorageManager.getChallengeStatus(track, level, c.challengeIndex || 1);
+              return !status.completed;
+            });
+            const slotToLoad = uncompleted || lvlData.challenges[0];
+            if (slotToLoad) {
+              this.loadProgressionChallenge(slotToLoad);
             }
           }).catch(() => {
             this.populateChallengeList();
@@ -254,6 +261,15 @@ class CodeReflexApp {
 
     if (this.dom.practiceBrowseLevelsBtn) {
       this.dom.practiceBrowseLevelsBtn.addEventListener('click', () => {
+        const track = ['html', 'css', 'javascript'].includes(this.currentLanguage) ? this.currentLanguage : 'html';
+        this.levelController.openModal(track);
+      });
+    }
+
+    if (this.dom.practiceLangPill) {
+      this.dom.practiceLangPill.style.cursor = 'pointer';
+      this.dom.practiceLangPill.title = 'Switch Language or Browse Levels';
+      this.dom.practiceLangPill.addEventListener('click', () => {
         const track = ['html', 'css', 'javascript'].includes(this.currentLanguage) ? this.currentLanguage : 'html';
         this.levelController.openModal(track);
       });
@@ -383,7 +399,7 @@ class CodeReflexApp {
             iconEl.title = 'Available to practice';
           } else {
             iconEl.textContent = '🔒';
-            iconEl.title = `Locked (Achieve ≥ 95% on Part ${partNum - 1} to unlock)`;
+            iconEl.title = `Locked (Complete Part ${partNum - 1} to unlock)`;
           }
         }
       });
@@ -465,6 +481,28 @@ class CodeReflexApp {
   }
 
   selectDefaultChallenge() {
+    if (this.currentMode === 'levels') {
+      const track = ['html', 'css', 'javascript'].includes(this.currentLanguage) ? this.currentLanguage : 'html';
+      const level = StorageManager.getCurrentLevel(track) || 1;
+      this.currentLanguage = track;
+      StorageManager.setActiveLanguage(track);
+      loadLevelChallenges(track, level).then(lvlData => {
+        const uncompleted = lvlData.challenges.find(c => {
+          const status = StorageManager.getChallengeStatus(track, level, c.challengeIndex || 1);
+          return !status.completed;
+        });
+        const slot = uncompleted || lvlData.challenges[0];
+        if (slot) {
+          this.loadProgressionChallenge(slot);
+        }
+      }).catch(() => {
+        this.updateLanguageOptionsForMode(this.currentMode);
+        this.populateChallengeList();
+        this.loadFirstAvailableChallenge();
+      });
+      return;
+    }
+
     this.updateLanguageOptionsForMode(this.currentMode);
     this.populateChallengeList();
     this.loadFirstAvailableChallenge();
@@ -539,6 +577,14 @@ class CodeReflexApp {
   loadProgressionChallenge(challenge) {
     if (!challenge) return;
 
+    const lang = (challenge.language || 'html').toLowerCase();
+    this.currentLanguage = lang;
+    this.currentMode = 'levels';
+    StorageManager.setActiveLanguage(lang);
+    if (challenge.level) {
+      StorageManager.setCurrentLevel(lang, challenge.level);
+    }
+
     this.activeChallenge = {
       ...challenge,
       mode: 'levels'
@@ -565,6 +611,7 @@ class CodeReflexApp {
     this.updatePracticeHeaderBadge(this.activeChallenge);
 
     if (this.levelController) {
+      this.levelController.currentTrack = lang;
       this.levelController.updateHeaderStatus();
     }
     this.editor.focus();
@@ -572,13 +619,13 @@ class CodeReflexApp {
 
   goToNextChallenge() {
     if (this.activeChallenge && this.activeChallenge.mode === 'levels') {
-      const lang = this.activeChallenge.language;
-      const lvl = this.activeChallenge.level;
+      const lang = (this.activeChallenge.language || 'html').toLowerCase();
+      const lvl = this.activeChallenge.level || 1;
       const chIdx = this.activeChallenge.challengeIndex || 1;
 
       if (chIdx < 30) {
         loadLevelChallenges(lang, lvl).then(levelData => {
-          const nextSlot = levelData.challenges[chIdx];
+          const nextSlot = levelData && levelData.challenges ? levelData.challenges[chIdx] : null;
           if (nextSlot && (nextSlot.status === 'ready' || nextSlot.code)) {
             this.loadProgressionChallenge(nextSlot);
           } else {
@@ -588,7 +635,25 @@ class CodeReflexApp {
           this.levelController.openModal(lang, lvl);
         });
       } else {
-        this.levelController.openModal(lang);
+        // chIdx >= 30: Completed the level! Advance to next level of the SAME language
+        const maxLevel = (lang === 'javascript') ? 20 : 25;
+        const nextLevel = lvl + 1;
+        if (nextLevel <= maxLevel) {
+          StorageManager.setCurrentLevel(lang, nextLevel);
+          loadLevelChallenges(lang, nextLevel).then(levelData => {
+            const firstSlot = levelData && levelData.challenges ? levelData.challenges[0] : null;
+            if (firstSlot && (firstSlot.status === 'ready' || firstSlot.code)) {
+              this.loadProgressionChallenge(firstSlot);
+            } else {
+              this.levelController.openModal(lang, nextLevel);
+            }
+          }).catch(() => {
+            this.levelController.openModal(lang, nextLevel);
+          });
+        } else {
+          // Completed all levels of this track
+          this.levelController.openModal(lang, lvl);
+        }
       }
       return;
     }
@@ -636,26 +701,18 @@ class CodeReflexApp {
 
     if (this.activeChallenge && this.activeChallenge.mode === 'level1') {
       isLevel = true;
+      passedTarget = true;
       const partNum = this.activeChallenge.part || 1;
-      const targetAcc = this.activeChallenge.targetAccuracy || 95;
-      passedTarget = (metrics.accuracy >= targetAcc);
-
-      if (passedTarget) {
-        StorageManager.recordLevelPartCompletion('level1', partNum, metrics.wpm, metrics.accuracy);
-      }
+      StorageManager.recordLevelPartCompletion('level1', partNum, metrics.wpm, metrics.accuracy);
       this.updateLevelStepper();
     } else if (this.activeChallenge && this.activeChallenge.mode === 'levels') {
       isLevel = true;
       isProgressionV2 = true;
-      const targetAcc = this.activeChallenge.targetAccuracy || 95;
-      passedTarget = (metrics.accuracy >= targetAcc);
-
-      if (passedTarget) {
-        const lang = this.activeChallenge.language || 'html';
-        const lvl = this.activeChallenge.level || 1;
-        const chIdx = this.activeChallenge.challengeIndex || 1;
-        StorageManager.recordChallengeCompletion(lang, lvl, chIdx, metrics.wpm, metrics.accuracy);
-      }
+      passedTarget = true;
+      const lang = this.activeChallenge.language || 'html';
+      const lvl = this.activeChallenge.level || 1;
+      const chIdx = this.activeChallenge.challengeIndex || 1;
+      StorageManager.recordChallengeCompletion(lang, lvl, chIdx, metrics.wpm, metrics.accuracy);
       if (this.levelController) {
         this.levelController.updateHeaderStatus();
       }
@@ -679,11 +736,18 @@ class CodeReflexApp {
     // Save to Cloud Firestore if user is authenticated with a Firebase UID
     const currentUser = this.auth ? this.auth.getAuthenticatedUser() : null;
     if (currentUser && currentUser.uid) {
+      const levelProgress = StorageManager.getLevelProgress();
+      const progressionV2 = StorageManager.getProgressionState();
       import('./firebase.js').then(({ saveUserProgress }) => {
-        saveUserProgress(currentUser.uid, sessionPayload, StorageManager.getProgression());
+        saveUserProgress(currentUser.uid, sessionPayload, levelProgress, progressionV2);
       }).catch(err => {
-        console.warn('Asynchronous Firestore progress sync notice:', err);
+        console.warn('[CodeReflex Sync] Asynchronous Firestore progress sync notice:', err);
       });
+    }
+
+    // Re-render dashboard stats and highest level display if dashboard is initialized
+    if (this.dashboard) {
+      this.dashboard.render(currentUser);
     }
 
     // Update preview to 100% finished
@@ -693,8 +757,7 @@ class CodeReflexApp {
     this.modals.showCompletion(metrics, this.activeChallenge, {
       isLevelMode: isLevel,
       isProgressionV2,
-      targetAccuracy: 95,
-      passedTarget
+      passedTarget: true
     });
   }
 

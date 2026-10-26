@@ -31,6 +31,9 @@ service cloud.firestore {
         && (request.resource.data.bestWpm is number && request.resource.data.bestWpm >= 0)
         && (request.resource.data.averageAccuracy is number && request.resource.data.averageAccuracy >= 0 && request.resource.data.averageAccuracy <= 100);
 
+      // Disallow user profile deletion from web client
+      allow delete: if false;
+
       // Subcollection for detailed session telemetry: users/{userId}/history/{sessionId}
       match /history/{sessionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -45,6 +48,28 @@ service cloud.firestore {
       match /progression/{progressionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // Dedicated Public Leaderboard Collection: leaderboard/{userId}
+    // Only approved non-sensitive fields (NO email, NO private progress documents)
+    match /leaderboard/{userId} {
+      // Any authenticated user can read leaderboard rankings
+      allow read: if request.auth != null;
+
+      // Only the document owner can create or update their own leaderboard score
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'userId', 'displayName', 'photoURL', 'bestWpm',
+          'averageAccuracy', 'completedChallenges', 'updatedAt'
+        ])
+        && request.resource.data.userId == userId
+        && (request.resource.data.displayName is string)
+        && (request.resource.data.photoURL == null || request.resource.data.photoURL is string)
+        && (request.resource.data.bestWpm is number && request.resource.data.bestWpm >= 0)
+        && (request.resource.data.averageAccuracy is number && request.resource.data.averageAccuracy >= 0 && request.resource.data.averageAccuracy <= 100)
+        && (request.resource.data.completedChallenges is number && request.resource.data.completedChallenges >= 0);
+
+      allow delete: if false;
     }
   }
 }

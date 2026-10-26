@@ -274,14 +274,33 @@
 .dash-card-header-label {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dash-card-header-left {
+  display: flex;
+  align-items: center;
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
   color: #ffffff;
 }
 
-.dash-card-header-label svg {
+.dash-card-header-left svg {
   color: #ff2d55;
+}
+
+.dash-highest-level-pill {
+  background: rgba(255, 45, 85, 0.15);
+  border: 1px solid rgba(255, 45, 85, 0.35);
+  color: #ff476f;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .dash-ring-container {
@@ -995,6 +1014,244 @@
 .btn-practice-levels:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
+}
+
+/* ==========================================================================
+   5. LEADERBOARD: Top 10 Coders Section
+   ========================================================================== */
+
+.dash-leaderboard-section {
+  width: 100%;
+}
+
+.dash-panel-leaderboard {
+  background: #121420;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px 26px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-leaderboard-body {
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-leaderboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
+}
+
+@media (max-width: 900px) {
+  .dash-leaderboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-lb-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+
+.dash-lb-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Highlight Top 3 Ranks with Subtle Accents */
+.dash-lb-item.rank-1 {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.07) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.08);
+}
+
+.dash-lb-item.rank-2 {
+  background: linear-gradient(135deg, rgba(226, 232, 240, 0.06) 0%, rgba(148, 163, 184, 0.02) 100%);
+  border-color: rgba(226, 232, 240, 0.25);
+  box-shadow: 0 0 14px rgba(226, 232, 240, 0.06);
+}
+
+.dash-lb-item.rank-3 {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.06) 0%, rgba(180, 83, 9, 0.02) 100%);
+  border-color: rgba(217, 119, 6, 0.25);
+  box-shadow: 0 0 14px rgba(217, 119, 6, 0.06);
+}
+
+.dash-lb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dash-lb-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dash-lb-rank.rank-1 {
+  background: linear-gradient(135deg, #ffd700 0%, #f59e0b 100%);
+  color: #1a1202;
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.45);
+}
+
+.dash-lb-rank.rank-2 {
+  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+  color: #0f172a;
+  border-color: #e2e8f0;
+  box-shadow: 0 0 8px rgba(226, 232, 240, 0.35);
+}
+
+.dash-lb-rank.rank-3 {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  border-color: #d97706;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.35);
+}
+
+.dash-lb-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 45, 85, 0.15);
+  border: 1px solid rgba(255, 45, 85, 0.3);
+  color: #ff476f;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dash-lb-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dash-lb-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dash-lb-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dash-lb-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-lb-you-tag {
+  background: rgba(255, 45, 85, 0.15);
+  border: 1px solid rgba(255, 45, 85, 0.35);
+  color: #ff476f;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dash-lb-meta {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.dash-lb-right {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-left: 12px;
+}
+
+.dash-lb-wpm {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ff2d55;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-lb-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* States: Loading, Empty, Error */
+.dash-lb-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 10px;
+}
+
+.dash-lb-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 45, 85, 0.2);
+  border-top-color: #ff2d55;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.dash-lb-state-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.dash-lb-state-sub {
+  font-size: 12px;
+  color: #64748b;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.dash-lb-state svg {
+  color: #ff2d55;
+  opacity: 0.85;
 }
 
 /* ==========================================================================

@@ -5,6 +5,7 @@
  */
 
 import { StorageManager } from './storage.js';
+import { loadLeaderboard } from './firebase.js';
 
 export class DashboardController {
   constructor(options = {}) {
@@ -35,6 +36,9 @@ export class DashboardController {
     // Level progress ring
     this.levelRingFill = document.querySelector('#dash-ring-fill');
     this.levelRingValue = document.querySelector('#dash-level-ring-value');
+    this.levelRingSub = document.querySelector('#dash-level-ring-sub');
+    this.highestLevelPill = document.querySelector('#dash-highest-level-pill');
+    this.highestLevelDisplay = document.querySelector('#dash-highest-level-display');
 
     // Language cards
     this.cardHtml = document.querySelector('#dash-card-html');
@@ -56,6 +60,10 @@ export class DashboardController {
     this.recentListContainer = document.querySelector('#dash-recent-list');
     this.btnRecentViewAll = document.querySelector('#btn-dash-recent-view-all');
     this.weeklyChartArea = document.querySelector('#dash-weekly-chart-area');
+
+    // Leaderboard elements
+    this.leaderboardBody = document.querySelector('#dash-leaderboard-list');
+    this.btnLeaderboardViewAll = document.querySelector('#btn-dash-leaderboard-view-all');
   }
 
   bindEvents() {
@@ -67,19 +75,22 @@ export class DashboardController {
 
     if (this.cardHtml) {
       this.cardHtml.addEventListener('click', () => {
-        this.onStartPractice({ language: 'html', level: 1 });
+        const lvl = StorageManager.getCurrentLevel('html');
+        this.onStartPractice({ language: 'html', level: lvl });
       });
     }
 
     if (this.cardCss) {
       this.cardCss.addEventListener('click', () => {
-        this.onStartPractice({ language: 'css', level: 1 });
+        const lvl = StorageManager.getCurrentLevel('css');
+        this.onStartPractice({ language: 'css', level: lvl });
       });
     }
 
     if (this.cardJs) {
       this.cardJs.addEventListener('click', () => {
-        this.onStartPractice({ language: 'javascript', level: 1 });
+        const lvl = StorageManager.getCurrentLevel('javascript');
+        this.onStartPractice({ language: 'javascript', level: lvl });
       });
     }
 
@@ -106,12 +117,20 @@ export class DashboardController {
         this.onLogout();
       });
     }
+
+    if (this.btnLeaderboardViewAll) {
+      this.btnLeaderboardViewAll.addEventListener('click', () => {
+        this.refreshLeaderboard();
+      });
+    }
   }
 
   /**
    * Refreshes the dashboard metrics and user data.
    */
   render(currentUser) {
+    this.currentUser = currentUser;
+
     // 1. User Profile & Greeting
     const name = currentUser?.name || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Coder';
     const email = currentUser?.email || 'dev@codereflex.io';
@@ -166,12 +185,26 @@ export class DashboardController {
     const isNewUser = (history.sessions.length === 0 && totalCompletedAcrossTracks === 0);
     const displayCompletedLevels = isNewUser ? 18 : Math.max(1, totalCompletedAcrossTracks);
     const totalTrackLevels = 70;
-    const progressPercent = Math.min(100, Math.round((displayCompletedLevels / totalTrackLevels) * 100));
 
-    // Update Level Progress Ring
-    if (this.levelRingValue) {
-      this.levelRingValue.textContent = `${displayCompletedLevels} / ${totalTrackLevels}`;
+    // Requirement 4: Compare current levels of HTML, CSS, JavaScript and display highest
+    const highest = StorageManager.getHighestCurrentLevel();
+
+    if (this.highestLevelPill) {
+      this.highestLevelPill.textContent = highest.displayText;
     }
+    if (this.highestLevelDisplay) {
+      this.highestLevelDisplay.textContent = highest.displayText;
+    }
+    if (this.levelRingValue) {
+      this.levelRingValue.textContent = `Level ${highest.level}`;
+    }
+    if (this.levelRingSub) {
+      this.levelRingSub.textContent = highest.languageName;
+    }
+
+    // Progress percentage based on highest level track
+    const maxTrackLevels = highest.language === 'javascript' ? 20 : 25;
+    const progressPercent = Math.min(100, Math.round((highest.level / maxTrackLevels) * 100));
 
     if (this.levelRingFill) {
       // Circumference of r=52 is 2 * PI * 52 ≈ 326.7
@@ -181,10 +214,14 @@ export class DashboardController {
       this.levelRingFill.style.strokeDashoffset = `${offset}`;
     }
 
-    // Update track badges
-    if (this.htmlLevelCount) this.htmlLevelCount.textContent = `${isNewUser ? 25 : Math.max(1, htmlProg.unlockedLevel || 1)} Levels`;
-    if (this.cssLevelCount) this.cssLevelCount.textContent = `${isNewUser ? 25 : Math.max(1, cssProg.unlockedLevel || 1)} Levels`;
-    if (this.jsLevelCount) this.jsLevelCount.textContent = `${isNewUser ? 20 : Math.max(1, jsProg.unlockedLevel || 1)} Levels`;
+    // Update track badges with independent current levels
+    const htmlLvl = StorageManager.getCurrentLevel('html');
+    const cssLvl = StorageManager.getCurrentLevel('css');
+    const jsLvl = StorageManager.getCurrentLevel('javascript');
+
+    if (this.htmlLevelCount) this.htmlLevelCount.textContent = `Level ${htmlLvl} • 25 Levels`;
+    if (this.cssLevelCount) this.cssLevelCount.textContent = `Level ${cssLvl} • 25 Levels`;
+    if (this.jsLevelCount) this.jsLevelCount.textContent = `Level ${jsLvl} • 20 Levels`;
 
     // 3. Four Key Stat Cards
     let bestWpm = 0;
@@ -221,6 +258,9 @@ export class DashboardController {
 
     // 5. Render Weekly Progress Chart
     this.renderWeeklyChart(history.sessions, isNewUser, displayBestWpm);
+
+    // 6. Render Top 10 Coders Leaderboard from Firestore
+    this.refreshLeaderboard();
   }
 
   renderRecentList(sessions, isNewUser) {
@@ -256,7 +296,9 @@ export class DashboardController {
       // Bind click handlers to mock items
       this.recentListContainer.querySelectorAll('.dash-recent-item').forEach(el => {
         el.addEventListener('click', () => {
-          this.onStartPractice({ language: el.dataset.lang, level: 1 });
+          const lang = el.dataset.lang || 'html';
+          const lvl = StorageManager.getCurrentLevel(lang) || 1;
+          this.onStartPractice({ language: lang, level: lvl });
         });
       });
       return;
@@ -371,19 +413,10 @@ export class DashboardController {
   }
 
   handleContinuePractice() {
-    const history = StorageManager.getHistory();
-    const lastSession = history.sessions[0];
-
-    if (lastSession && lastSession.challengeId) {
-      this.onStartPractice({
-        challengeId: lastSession.challengeId,
-        language: lastSession.language || 'html'
-      });
-      return;
-    }
-
-    // Default to HTML Level 1 Challenge 1
-    this.onStartPractice({ language: 'html', level: 1 });
+    const highest = StorageManager.getHighestCurrentLevel();
+    const lang = highest.language || 'html';
+    const lvl = StorageManager.getCurrentLevel(lang) || highest.level || 1;
+    this.onStartPractice({ language: lang, level: lvl });
   }
 
   formatRelativeTime(isoString) {
@@ -398,6 +431,147 @@ export class DashboardController {
     if (elapsedHours < 24) return `${elapsedHours}h ago`;
     const elapsedDays = Math.floor(elapsedHours / 24);
     return `${elapsedDays}d ago`;
+  }
+
+  /**
+   * Loads real leaderboard data from Firestore and updates the UI.
+   */
+  async refreshLeaderboard() {
+    if (!this.leaderboardBody) return;
+
+    if (this.btnLeaderboardViewAll) {
+      this.btnLeaderboardViewAll.disabled = true;
+      this.btnLeaderboardViewAll.textContent = 'Refreshing...';
+    }
+
+    this.leaderboardBody.innerHTML = `
+      <div class="dash-lb-state">
+        <div class="dash-lb-spinner"></div>
+        <div class="dash-lb-state-text">Loading Top 10 Coders from Firestore...</div>
+      </div>
+    `;
+
+    try {
+      const leaders = await loadLeaderboard(10);
+      this.renderLeaderboard(leaders);
+    } catch (err) {
+      console.warn('[CodeReflex Dashboard] Leaderboard fetch error:', err);
+      this.renderLeaderboardError(err.message || 'Unable to load leaderboard.');
+    } finally {
+      if (this.btnLeaderboardViewAll) {
+        this.btnLeaderboardViewAll.disabled = false;
+        this.btnLeaderboardViewAll.textContent = 'View All Top 10';
+      }
+    }
+  }
+
+  /**
+   * Renders the Top 10 Coders.
+   * Highlights ranks 1, 2, and 3 with gold, silver, and bronze accents.
+   * Handles empty or error states gracefully without fake data.
+   */
+  renderLeaderboard(leaders) {
+    if (!this.leaderboardBody) return;
+
+    // Check for error or unconfigured state
+    if (!leaders || (leaders.length === 0 && (leaders.error || leaders.unconfigured))) {
+      const isUnconfigured = leaders && leaders.unconfigured;
+      this.leaderboardBody.innerHTML = `
+        <div class="dash-lb-state">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div class="dash-lb-state-text">${isUnconfigured ? 'Cloud Leaderboard Not Configured' : 'Leaderboard Sync Pending'}</div>
+          <div class="dash-lb-state-sub">${isUnconfigured ? 'Configure Firebase in js/firebase-config.js to activate live rankings.' : 'Rankings will appear as soon as the Cloud Firestore security rules are active.'}</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Check for empty leaderboard (0 entries recorded yet)
+    if (leaders.length === 0) {
+      this.leaderboardBody.innerHTML = `
+        <div class="dash-lb-state">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
+            <path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+          </svg>
+          <div class="dash-lb-state-text">No coders on the leaderboard yet.</div>
+          <div class="dash-lb-state-sub">Complete any typing challenge to claim the #1 spot on the leaderboard!</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Render real Top 10 Coders
+    const top10 = leaders.slice(0, 10);
+    const currentUid = this.currentUser?.uid;
+
+    this.leaderboardBody.innerHTML = `
+      <div class="dash-leaderboard-grid">
+        ${top10.map((user, idx) => {
+          const rank = idx + 1;
+          const rankClass = rank <= 3 ? `rank-${rank}` : '';
+          const isCurrent = currentUid && user.userId === currentUid;
+          const initial = (user.displayName || 'C').trim().charAt(0).toUpperCase();
+          const avatarHtml = user.photoURL 
+            ? `<img src="${this.escapeHtml(user.photoURL)}" alt="${this.escapeHtml(user.displayName)}" onerror="this.parentElement.textContent='${initial}'">`
+            : initial;
+          const metaText = `${user.averageAccuracy || 100}% Accuracy • ${user.completedChallenges || 0} Challenges`;
+
+          return `
+            <div class="dash-lb-item ${rankClass}">
+              <div class="dash-lb-left">
+                <div class="dash-lb-rank ${rankClass}">#${rank}</div>
+                <div class="dash-lb-avatar">${avatarHtml}</div>
+                <div class="dash-lb-user-info">
+                  <div class="dash-lb-name-row">
+                    <span class="dash-lb-name" title="${this.escapeHtml(user.displayName)}">${this.escapeHtml(user.displayName)}</span>
+                    ${isCurrent ? '<span class="dash-lb-you-tag">You</span>' : ''}
+                  </div>
+                  <span class="dash-lb-meta">${metaText}</span>
+                </div>
+              </div>
+              <div class="dash-lb-right">
+                <span class="dash-lb-wpm">${user.bestWpm || 0}</span>
+                <span class="dash-lb-unit">WPM</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderLeaderboardError(msg) {
+    if (!this.leaderboardBody) return;
+    this.leaderboardBody.innerHTML = `
+      <div class="dash-lb-state">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div class="dash-lb-state-text">Unable to load leaderboard</div>
+        <div class="dash-lb-state-sub">${this.escapeHtml(msg)}</div>
+      </div>
+    `;
+  }
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 }
 
