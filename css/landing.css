@@ -218,6 +218,13 @@
    Hero Section
    ========================================================================== */
 
+.landing-view main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .landing-hero {
   padding: clamp(120px, 16vh, 170px) 24px 80px;
   max-width: 1040px;

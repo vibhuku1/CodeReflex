@@ -309,8 +309,8 @@ export class LevelController {
       card.innerHTML = `
         <div class="slot-card-header">
           <span class="slot-num">#${chNum < 10 ? '0' + chNum : chNum}</span>
-          <span class="slot-badge ${isCompleted ? 'badge-completed' : (isAuthored ? 'badge-ready' : 'badge-pending')}">
-            ${isCompleted ? '✓ Done' : (isAuthored ? 'Available' : 'Pending Content')}
+          <span class="slot-badge ${isCompleted ? 'badge-completed' : 'badge-ready'}">
+            ${isCompleted ? '✓ Done' : 'Available'}
           </span>
         </div>
         <div class="slot-title">${slot.title}</div>
@@ -325,20 +325,15 @@ export class LevelController {
       `;
 
       card.addEventListener('click', () => {
-        this.handleSlotClick(slot, isAuthored);
+        this.handleSlotClick(slot);
       });
 
       this.challengesContainer.appendChild(card);
     });
   }
 
-  handleSlotClick(slot, isAuthored) {
-    if (isAuthored) {
-      this.closeModal();
-      this.onChallengeSelect(slot);
-    } else {
-      // Slot is cleanly identified as pending authoring (Phase 4)
-      alert(`Challenge Slot ${slot.id} (${slot.title})\n\nContent for this challenge slot is scheduled for authoring in Phase 4. Slot ID: ${slot.id}`);
-    }
+  handleSlotClick(slot) {
+    this.closeModal();
+    this.onChallengeSelect(slot);
   }
 }

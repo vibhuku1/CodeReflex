@@ -636,7 +636,7 @@ class CodeReflexApp {
         });
       } else {
         // chIdx >= 30: Completed the level! Advance to next level of the SAME language
-        const maxLevel = (lang === 'javascript') ? 20 : 25;
+        const maxLevel = 70;
         const nextLevel = lvl + 1;
         if (nextLevel <= maxLevel) {
           StorageManager.setCurrentLevel(lang, nextLevel);

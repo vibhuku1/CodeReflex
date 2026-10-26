@@ -56,6 +56,7 @@ export class AuthManager {
     this.btnLoginNav = document.querySelector('#landing-btn-login');
     this.btnGetStarted = document.querySelector('#landing-btn-get-started');
     this.btnPracticeHero = document.querySelector('#landing-btn-practice');
+    this.btnDemoHero = document.querySelector('#landing-btn-demo') || document.querySelector('.btn-demo-link');
 
     // Dedicated Login Page Elements
     this.btnLoginBack = document.querySelector('#btn-login-back');
@@ -126,6 +127,52 @@ export class AuthManager {
         }
       });
     }
+
+    if (this.btnDemoHero) {
+      this.btnDemoHero.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showPracticePortal();
+      });
+    }
+
+    // Smooth handling for landing navigation links
+    const landingNavLinks = document.querySelectorAll('.landing-nav-link');
+    landingNavLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (href === '#section-hero') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (href === '#languages' || href === '#section-languages') {
+          e.preventDefault();
+          if (this.isAuthenticated()) {
+            this.showDashboard();
+          } else {
+            this.showPracticePortal();
+          }
+        } else if (href === '#build' || href === '#section-build') {
+          e.preventDefault();
+          this.showPracticePortal();
+        } else if (href === '#stats' || href === '#section-stats') {
+          e.preventDefault();
+          if (this.isAuthenticated()) {
+            this.showDashboard();
+          } else {
+            this.openLoginFlow('login');
+          }
+        } else if (href === '#levels' || href === '#section-levels') {
+          e.preventDefault();
+          if (this.isAuthenticated()) {
+            this.showDashboard();
+          } else {
+            this.showPracticePortal();
+          }
+        } else if (href === '#vision' || href === '#section-vision') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
 
     // 2. Login Page -> Back to Landing navigation
     if (this.btnLoginBack) {

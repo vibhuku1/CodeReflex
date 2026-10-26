@@ -84,212 +84,9 @@
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
           </button>
-          <a href="#section-build" class="btn-demo-link">Explore Demo</a>
+          <button type="button" class="btn-demo-link" id="landing-btn-demo">Explore Demo</button>
         </div>
       </section>
-
-      <!-- 2. Supported Languages Section -->
-      <section class="landing-section" id="section-languages">
-        <div class="section-header">
-          <div class="section-label">Supported Stacks</div>
-          <h2 class="section-title">Master Real Programming Syntax</h2>
-          <p class="section-desc">
-            Practice typing velocity and precision across languages you write daily. From brackets, curly braces, and indentation to JSX tags and CSS tokens.
-          </p>
-        </div>
-
-        <div class="languages-grid">
-          <div class="language-card">
-            <div class="language-card-top">
-              <span class="lang-pill lang-js">JavaScript</span>
-              <span class="lang-tag">ES6+ / Web</span>
-            </div>
-            <p class="language-card-desc">Async functions, promises, arrow expressions, destructured bindings, and DOM APIs.</p>
-            <div class="language-code-snippet"><code>const data = await res.json();</code></div>
-          </div>
-
-          <div class="language-card">
-            <div class="language-card-top">
-              <span class="lang-pill lang-py">Python</span>
-              <span class="lang-tag">PEP 8 / Indented</span>
-            </div>
-            <p class="language-card-desc">Strict indentation, list comprehensions, decorators, type hints, and clean control flow.</p>
-            <div class="language-code-snippet"><code>def solve(wpm: float) -&gt; bool:</code></div>
-          </div>
-
-          <div class="language-card">
-            <div class="language-card-top">
-              <span class="lang-pill lang-html">HTML5</span>
-              <span class="lang-tag">Semantics / ARIA</span>
-            </div>
-            <p class="language-card-desc">Semantic document structure, accessible ARIA roles, clean element nesting, and attributes.</p>
-            <div class="language-code-snippet"><code>&lt;dialog class="modal-card"&gt;</code></div>
-          </div>
-
-          <div class="language-card">
-            <div class="language-card-top">
-              <span class="lang-pill lang-css">CSS3</span>
-              <span class="lang-tag">Layout &amp; Tokens</span>
-            </div>
-            <p class="language-card-desc">Flexbox, CSS Grid layouts, custom design tokens, keyframe animations, and pseudo-classes.</p>
-            <div class="language-code-snippet"><code>display: flex; gap: var(--pad);</code></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. Type-to-Build Interactive Showcase Section -->
-      <section class="landing-section" id="section-build">
-        <div class="section-header">
-          <div class="section-label">Signature Innovation</div>
-          <h2 class="section-title">Type Code. Watch It Render Live.</h2>
-          <p class="section-desc">
-            Unlike generic prose typing tests, CodeReflex features progressive rendering. As you type HTML elements and CSS properties, your component constructs live in the preview pane.
-          </p>
-        </div>
-
-        <div class="showcase-window">
-          <div class="showcase-pane showcase-code-pane">
-            <div class="showcase-pane-header">
-              <span class="pane-tag">Editor View</span>
-              <span style="font-size:11px; color:#38bdf8;">snippet.html</span>
-            </div>
-            <div class="mock-code-line"><span class="mock-tag">&lt;div</span> <span class="mock-attr">class</span>=<span class="mock-str">"telemetry-pill"</span><span class="mock-tag">&gt;</span></div>
-            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"status-dot"</span><span class="mock-tag">&gt;&lt;/span&gt;</span></div>
-            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"label"</span><span class="mock-tag">&gt;</span>Production Live<span class="mock-tag">&lt;/span&gt;</span></div>
-            <div class="mock-code-line">&nbsp;&nbsp;<span class="mock-tag">&lt;span</span> <span class="mock-attr">class</span>=<span class="mock-str">"speed"</span><span class="mock-tag">&gt;</span>1.4s<span class="mock-tag">&lt;/span&gt;</span></div>
-            <div class="mock-code-line"><span class="mock-tag">&lt;/div&gt;</span></div>
-          </div>
-          <div class="showcase-pane showcase-preview-pane">
-            <div class="showcase-pane-header" style="width:100%; position:absolute; top:16px; left:20px; right:20px;">
-              <span class="pane-tag">Live Component Sandbox</span>
-              <span class="preview-badge badge-success">Compiled</span>
-            </div>
-            <div class="mock-preview-component">
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                <span style="font-size:11px; color:#94a3b8; text-transform:uppercase; font-weight:600; letter-spacing:0.04em;">Telemetry</span>
-                <span style="font-size:11px; color:#34d399; background:rgba(16,185,129,0.12); padding:2px 6px; border-radius:999px;">+18.4%</span>
-              </div>
-              <div style="font-size:24px; font-weight:800; color:#ffffff; font-family:var(--font-mono); margin-bottom:4px;">$48,290</div>
-              <div style="font-size:11px; color:#64748b;">Realtime build synchronized with typing engine</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. Statistics & Precision Telemetry Section -->
-      <section class="landing-section" id="section-stats">
-        <div class="section-header">
-          <div class="section-label">Typing Telemetry</div>
-          <h2 class="section-title">Engineered For Real Coding Velocity</h2>
-          <p class="section-desc">
-            Accurate calculations designed around real programming syntax, brackets, punctuation, and symbol handling.
-          </p>
-        </div>
-
-        <div class="feature-cards-grid">
-          <div class="feature-card">
-            <div class="feature-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <h3 class="feature-card-title">Standard Net WPM</h3>
-            <p class="feature-card-desc">
-              Computed strictly as <code>((correct_characters / 5) / elapsed_minutes)</code>. Starts precisely on your first keystroke and stops at completion.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <h3 class="feature-card-title">Strict Syntax Accuracy</h3>
-            <p class="feature-card-desc">
-              Instant visual mistake feedback with wavy error underlines. Accurately tracks curly braces, quotes, semicolons, brackets, and newlines.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 20V10M12 20V4M6 20v-6"></path>
-              </svg>
-            </div>
-            <h3 class="feature-card-title">Rhythm Progression</h3>
-            <p class="feature-card-desc">
-              Detailed post-challenge breakdown showing interval WPM bars, keystroke consistency, raw vs net speed, and session history stored locally.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. Progressive Level System Section -->
-      <section class="landing-section" id="section-levels">
-        <div class="section-header">
-          <div class="section-label">Structured Progression</div>
-          <h2 class="section-title">Level 1: Three Progressive Parts</h2>
-          <p class="section-desc">
-            Complete sequential milestones to master coding fluency. Advance to the next part upon completing each challenge.
-          </p>
-        </div>
-
-        <div class="feature-cards-grid">
-          <div class="feature-card">
-            <div class="part-badge" style="color:var(--accent-cyan); margin-bottom:12px;">Part 1 • Unlocked</div>
-            <h3 class="feature-card-title">HTML Structure</h3>
-            <p class="feature-card-desc">
-              Type the semantic skeleton of the status component. Master HTML tag tags, classes, and nested element hierarchy.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="part-badge" style="color:var(--accent-amber); margin-bottom:12px;">Part 2 • Complete Part 1 to Unlock</div>
-            <h3 class="feature-card-title">CSS Styling</h3>
-            <p class="feature-card-desc">
-              Apply flexbox alignment, pill border-radius, emerald color tones, and glassmorphic styling live to the component.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="part-badge" style="color:var(--accent-emerald); margin-bottom:12px;">Part 3 • Complete Part 2 to Unlock</div>
-            <h3 class="feature-card-title">Complete Design</h3>
-            <p class="feature-card-desc">
-              Assemble the finished production telemetry card with glowing pulse indicator and interactive inspection control.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. Vision & Mission Section -->
-      <section class="landing-section" id="section-vision">
-        <div class="section-header">
-          <div class="section-label">Core Philosophy</div>
-          <h2 class="section-title">Why CodeReflex Exists</h2>
-        </div>
-
-        <div class="vision-grid">
-          <div class="vision-card">
-            <div class="vision-badge">Our Vision</div>
-            <h3>Direct Thought-to-Code Velocity</h3>
-            <p>
-              Developers think in algorithms, structures, and systems. We believe typing should never be the bottleneck. CodeReflex bridges the gap between conceiving an idea and typing it out smoothly without awkward keyboard finger-twisting on symbols like <code>{}</code>, <code>[]</code>, <code>()</code>, <code>=&gt;</code>, or <code>;</code>.
-            </p>
-          </div>
-
-          <div class="vision-card">
-            <div class="vision-badge" style="color:var(--accent-cyan);">Our Mission</div>
-            <h3>Real Syntax Over Random Words</h3>
-            <p>
-              Typing "the quick brown fox" does nothing for your programming velocity. CodeReflex grounds practice entirely in authentic programming idioms across HTML, CSS, JavaScript, and Python, paired with visual instant gratification through real-time component construction.
-            </p>
-          </div>
-        </div>
-      </section>
-
     </main>
 
     <!-- Landing Footer -->
@@ -551,7 +348,7 @@
                     <rect x="9" y="8" width="4" height="13" rx="1"></rect>
                     <rect x="16" y="3" width="4" height="18" rx="1"></rect>
                   </svg>
-                  <span id="dash-html-level-count">25 Levels</span>
+                  <span id="dash-html-level-count">70 Levels</span>
                 </div>
               </div>
             </div>
@@ -571,7 +368,7 @@
                     <rect x="9" y="8" width="4" height="13" rx="1"></rect>
                     <rect x="16" y="3" width="4" height="18" rx="1"></rect>
                   </svg>
-                  <span id="dash-css-level-count">25 Levels</span>
+                  <span id="dash-css-level-count">70 Levels</span>
                 </div>
               </div>
             </div>
@@ -591,7 +388,7 @@
                     <rect x="9" y="8" width="4" height="13" rx="1"></rect>
                     <rect x="16" y="3" width="4" height="18" rx="1"></rect>
                   </svg>
-                  <span id="dash-js-level-count">20 Levels</span>
+                  <span id="dash-js-level-count">70 Levels</span>
                 </div>
               </div>
             </div>
