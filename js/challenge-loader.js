@@ -97,7 +97,7 @@ export async function loadLevelChallenges(language, levelNumber) {
 }
 
 /**
- * Resolves a challenge by ID across legacy challenges and the 70-level registry.
+ * Resolves a challenge by ID across legacy challenges and the multi-level registry.
  */
 export async function getChallengeByIdAsync(challengeId) {
   if (!challengeId) return null;
@@ -106,17 +106,21 @@ export async function getChallengeByIdAsync(challengeId) {
   const legacy = LEGACY_CHALLENGES.find(c => c.id === challengeId);
   if (legacy) return legacy;
 
-  // 2. Parse 70-level challenge ID format: {lang}-l{lvl}-c{ch}
-  const match = challengeId.match(/^([a-z]+)-l(\d+)-c(\d+)$/i);
+  // 2. Parse challenge ID format: {lang}-l{lvl}-c{ch} or {lang}-l{lvl}-q{ch} (e.g. css-l001-q001)
+  const match = challengeId.match(/^([a-z]+)-l(\d+)-(?:c|q)(\d+)$/i);
   if (match) {
     const [, lang, lvlStr, chStr] = match;
     const lvl = parseInt(lvlStr, 10);
     const ch = parseInt(chStr, 10);
     const levelData = await loadLevelChallenges(lang, lvl);
-    const challenge = levelData.challenges.find(c => c.index === ch || c.id === challengeId);
+    const challenge = levelData.challenges.find(c => c.index === ch || c.id === challengeId || (lang.toLowerCase() === 'css' && ch === 1));
     if (challenge) return challenge;
   }
 
   return null;
+}
+
+if (typeof window !== 'undefined') {
+  window.loadLevelChallenges = loadLevelChallenges;
 }
 

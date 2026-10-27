@@ -7,10 +7,17 @@
 export const LEVEL_TIERS = {
   BEGINNER: { min: 1, max: 20, name: 'Beginner', badgeClass: 'tier-beginner' },
   INTERMEDIATE: { min: 21, max: 45, name: 'Intermediate', badgeClass: 'tier-intermediate' },
-  ADVANCED: { min: 46, max: 70, name: 'Advanced', badgeClass: 'tier-advanced' }
+  ADVANCED: { min: 46, max: 70, name: 'Advanced', badgeClass: 'tier-advanced' },
+  EXPERT: { min: 76, max: 100, name: 'Expert', badgeClass: 'tier-advanced' }
 };
 
-export function getTierForLevel(levelNum) {
+export function getTierForLevel(levelNum, lang = 'html') {
+  if (lang === 'css') {
+    if (levelNum >= 1 && levelNum <= 25) return { min: 1, max: 25, name: 'Beginner', badgeClass: 'tier-beginner' };
+    if (levelNum >= 26 && levelNum <= 50) return { min: 26, max: 50, name: 'Intermediate', badgeClass: 'tier-intermediate' };
+    if (levelNum >= 51 && levelNum <= 75) return { min: 51, max: 75, name: 'Advanced', badgeClass: 'tier-advanced' };
+    return { min: 76, max: 100, name: 'Expert', badgeClass: 'tier-advanced' };
+  }
   if (levelNum >= 1 && levelNum <= 20) return LEVEL_TIERS.BEGINNER;
   if (levelNum >= 21 && levelNum <= 45) return LEVEL_TIERS.INTERMEDIATE;
   return LEVEL_TIERS.ADVANCED;
@@ -42,30 +49,51 @@ const HTML_TOPICS = [
   'Virtualized List Containers'
 ];
 
-// 70 Progressive Topics for CSS
+// 100 Complete Real-World Topics for CSS
 const CSS_TOPICS = [
-  // 1-20: Beginner
-  'Type & Universal Selectors', 'Class & ID Selectors', 'Color Formats (HEX, RGB, HSL)', 'Typography & Font Families',
-  'Font Size, Weight & Line Height', 'Text Alignment & Decoration', 'Box Model: Content & Padding', 'Box Model: Borders & Radii',
-  'Box Model: Margins & Spacing', 'Display: Block & Inline', 'Display: Inline-Block', 'Units: Pixels & Rem Units',
-  'Units: Percentages & Viewports', 'Element Visibility & Opacity', 'Box Shadows & Elevations', 'List Styling & Markers',
-  'Hover & Active States', 'Cursor Types & Interactivity', 'Overflow Clipping & Scrolling', 'Positioning: Relative & Absolute',
-  // 21-45: Intermediate
-  'Positioning: Fixed & Sticky', 'Flexbox: Direction & Wrap', 'Flexbox: Justify Content', 'Flexbox: Align Items & Self',
-  'Flexbox: Grow, Shrink & Basis', 'Flexbox: Gap & Alignment', 'CSS Grid: Template Columns', 'CSS Grid: Fr Units & Repeat',
-  'CSS Grid: Minmax & Auto-fill', 'CSS Grid: Areas & Templates', 'Media Queries: Mobile Breakpoints', 'Fluid Typography with Clamp',
-  'CSS Custom Properties (Variables)', 'Pseudo-elements (::before, ::after)', 'Structural Pseudo-classes (:nth-child)', 'Form Pseudo-classes (:checked, :focus)',
-  'Focus Visible & Focus Rings', 'CSS Transitions & Durations', 'Transition Timing Functions', '2D Transforms: Translate & Scale',
-  '2D Transforms: Rotate & Skew', 'Linear & Radial Gradients', 'Custom Scrollbar Styling', 'Filter Effects (Blur, Grayscale)',
-  'Backdrop Filter & Glassmorphism',
-  // 46-70: Advanced
-  'Keyframe Animation Foundations', 'Multi-step Animation Chaining', 'CSS Grid Holy Grail Layout', 'Subgrid Implementations',
-  'Container Queries: Inline Size', 'Container Queries: Style', 'Native CSS Nesting Syntax', 'Modern Selector: :has() Relational',
-  'Modern Selectors: :is() & :where()', 'Logical Properties (Inline/Block)', 'Modern Color Space: OKLCH', 'Color Mixing (color-mix)',
-  'Scroll-driven Animations', 'Anchor Positioning Basics', '3D Transforms & Perspective', 'Clip Paths & Polygon Masks',
-  'Dark Theme Custom Property Systems', 'Print Stylesheet Optimizations', 'Hardware Acceleration (will-change)', 'Custom Select Menu Styling',
-  'Interactive Tooltip Architecture', 'Responsive Data Table Layouts', 'Fluid Space Clamp Scale Systems', 'Skeleton Loading Shimmer Effects',
-  'Split-pane Resizer Component Styles'
+  // Beginner (Levels 1-25)
+  'Product Card Design', 'Color Palette and Background Styling', 'Typography and Text Hierarchy',
+  'Margin, Padding and Spacing', 'CSS Box Model Layout', 'Borders and Rounded Corners',
+  'Box Shadows and Visual Depth', 'Modern Button Design', 'Product Image Styling',
+  'Flexbox Alignment', 'Flexbox Navigation Layout', 'CSS Grid Product Gallery',
+  'Website Navigation Bar', 'Login Form Styling', 'User Profile Card',
+  'Status Badges and Labels', 'Product Card Collection', 'Positioning and Overlays',
+  'Interactive Hover Effects', 'Smooth CSS Transitions', 'Responsive Product Card',
+  'Hero Section Design', 'Feature Cards Section', 'Pricing Card Design',
+  'Complete Mini Landing Page',
+
+  // Intermediate (Levels 26-50)
+  'Advanced Flexbox Composition', 'Nested CSS Grid Dashboard', 'Responsive Navigation System',
+  'E-Commerce Product Details Page', 'Shopping Cart Interface', 'Checkout Page Layout',
+  'Search Bar and Filter Toolbar', 'Product Filter Sidebar', 'Signup Page Design',
+  'Form Validation States', 'Data Table and Pagination', 'Admin Dashboard Layout',
+  'Sidebar Navigation System', 'Analytics Statistics Cards', 'Chart Panel Styling',
+  'Modal Dialog Design', 'Dropdown Menu Interface', 'Tabs and Accordion Components',
+  'Toast Notification Design', 'Image Gallery Layout', 'Masonry Photo Gallery',
+  'Blog Article Page', 'Testimonial Section', 'Product Comparison Table',
+  'Responsive Pricing Plans',
+
+  // Advanced (Levels 51-75)
+  'CSS Custom Properties and Design Tokens', 'Light and Dark Theme System', 'Interactive Card States',
+  'Accessible Focus Indicators', 'Complex Website Header', 'Multi-Column Editorial Layout',
+  'Responsive Product Listing', 'Container Queries', 'Advanced CSS Grid Composition',
+  'Stacking Context and Layer Management', 'Advanced CSS Pseudo-Classes', 'Pseudo-Elements for Decorations',
+  'Layered Gradient Backgrounds', 'CSS Masks and Clipping', 'Decorative CSS Shapes',
+  'Transform-Based UI Effects', 'Keyframe Animation Design', 'Motion Design System',
+  'Scroll-Driven Visual Effects', 'Reduced-Motion Accessibility', 'Fluid Responsive Typography',
+  'Fluid Spacing System', 'Reusable Responsive Components', 'Complex Analytics Dashboard',
+  'Project Management Board UI',
+
+  // Expert (Levels 76-100)
+  'Advanced Responsive Dashboard', 'Enterprise Admin Workspace', 'SaaS Settings Interface',
+  'Multi-Step Form Experience', 'Advanced Checkout Experience', 'Marketplace Homepage',
+  'Advanced Product Comparison UI', 'Responsive Portfolio Website', 'Editorial Magazine Website',
+  'Multi-Panel Workspace', 'Complex Data Table Interface', 'Advanced Search Results Page',
+  'Notification Center Interface', 'Team Collaboration Dashboard', 'Responsive Learning Platform UI',
+  'Travel Booking Interface', 'Finance Dashboard Styling', 'Healthcare Appointment Interface',
+  'Restaurant Ordering Website', 'Real Estate Listing Interface', 'Advanced Component Variant System',
+  'Scalable CSS Architecture', 'Multi-Page Website Styling', 'Complete Responsive E-Commerce Website',
+  'CSS Capstone: Full Website Design System'
 ];
 
 // 70 Progressive Topics for JavaScript
@@ -101,15 +129,45 @@ const TOPIC_MAP = {
 };
 
 /**
- * Builds the canonical metadata for any level (1-70) in HTML, CSS, or JavaScript.
+ * Builds the canonical metadata for any level in HTML, CSS (1-100), or JavaScript (1-70).
  */
 export function getLevelMeta(language, levelNum) {
   const lang = (language || 'html').toLowerCase();
-  const lvl = Math.max(1, Math.min(70, parseInt(levelNum, 10) || 1));
+  const isCss = (lang === 'css');
+  const maxLvl = isCss ? 100 : 70;
+  const lvl = Math.max(1, Math.min(maxLvl, parseInt(levelNum, 10) || 1));
   const topics = TOPIC_MAP[lang] || HTML_TOPICS;
   const topicTitle = topics[lvl - 1] || `Level ${lvl} Progression`;
-  const tier = getTierForLevel(lvl);
+  const tier = getTierForLevel(lvl, lang);
 
+  if (isCss) {
+    const padded = String(lvl).padStart(3, '0');
+    const id = `css-l${padded}-q001`;
+    return {
+      language: 'css',
+      level: lvl,
+      tier: tier.name,
+      badgeClass: tier.badgeClass,
+      title: topicTitle,
+      description: `Master ${topicTitle} through this complete, practical CSS challenge.`,
+      totalChallenges: 1,
+      challenges: [
+        {
+          id,
+          index: 1,
+          challengeIndex: 1,
+          level: lvl,
+          language: 'css',
+          title: topicTitle,
+          difficulty: tier.name.toLowerCase(),
+          status: 'ready',
+          description: `Master ${topicTitle} (Challenge #1 of Level ${lvl}).`
+        }
+      ]
+    };
+  }
+
+  // HTML and JS remain 30 challenges per level, 70 levels
   const challenges = [];
   for (let ch = 1; ch <= 30; ch++) {
     const id = `${lang}-l${lvl}-c${ch}`;
@@ -121,7 +179,6 @@ export function getLevelMeta(language, levelNum) {
       language: lang,
       title: `${topicTitle} - Exercise ${ch}`,
       difficulty: tier.name.toLowerCase(),
-      // Unimplemented slots are tracked cleanly
       status: 'unimplemented',
       description: `Practice coding and typing proficiency for ${topicTitle} (Challenge #${ch} of Level ${lvl}).`
     });
@@ -140,12 +197,13 @@ export function getLevelMeta(language, levelNum) {
 }
 
 /**
- * Returns metadata summary for all 70 levels of a specific language.
+ * Returns metadata summary for all levels of a specific language (100 for CSS, 70 for HTML/JS).
  */
 export function getAllLevelsSummary(language) {
   const lang = (language || 'html').toLowerCase();
+  const maxLvl = (lang === 'css') ? 100 : 70;
   const levels = [];
-  for (let lvl = 1; lvl <= 70; lvl++) {
+  for (let lvl = 1; lvl <= maxLvl; lvl++) {
     const meta = getLevelMeta(lang, lvl);
     levels.push({
       language: lang,
@@ -154,7 +212,7 @@ export function getAllLevelsSummary(language) {
       badgeClass: meta.badgeClass,
       title: meta.title,
       description: meta.description,
-      totalChallenges: 30
+      totalChallenges: meta.totalChallenges
     });
   }
   return levels;

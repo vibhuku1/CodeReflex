@@ -203,7 +203,7 @@ export class DashboardController {
     }
 
     // Progress percentage based on highest level track
-    const maxTrackLevels = 70;
+    const maxTrackLevels = highest.language === 'css' ? 100 : 70;
     const progressPercent = Math.min(100, Math.round((highest.level / maxTrackLevels) * 100));
 
     if (this.levelRingFill) {
@@ -220,7 +220,7 @@ export class DashboardController {
     const jsLvl = StorageManager.getCurrentLevel('javascript');
 
     if (this.htmlLevelCount) this.htmlLevelCount.textContent = `Level ${htmlLvl} • 70 Levels`;
-    if (this.cssLevelCount) this.cssLevelCount.textContent = `Level ${cssLvl} • 70 Levels`;
+    if (this.cssLevelCount) this.cssLevelCount.textContent = `Level ${cssLvl} • 100 Levels`;
     if (this.jsLevelCount) this.jsLevelCount.textContent = `Level ${jsLvl} • 70 Levels`;
 
     // 3. Four Key Stat Cards

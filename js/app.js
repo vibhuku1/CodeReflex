@@ -622,8 +622,10 @@ class CodeReflexApp {
       const lang = (this.activeChallenge.language || 'html').toLowerCase();
       const lvl = this.activeChallenge.level || 1;
       const chIdx = this.activeChallenge.challengeIndex || 1;
+      const maxChallengesInLevel = (lang === 'css') ? 1 : 30;
+      const maxLevel = (lang === 'css') ? 100 : 70;
 
-      if (chIdx < 30) {
+      if (chIdx < maxChallengesInLevel) {
         loadLevelChallenges(lang, lvl).then(levelData => {
           const nextSlot = levelData && levelData.challenges ? levelData.challenges[chIdx] : null;
           if (nextSlot && (nextSlot.status === 'ready' || nextSlot.code)) {
@@ -635,8 +637,7 @@ class CodeReflexApp {
           this.levelController.openModal(lang, lvl);
         });
       } else {
-        // chIdx >= 30: Completed the level! Advance to next level of the SAME language
-        const maxLevel = 70;
+        // Completed the level! Advance to next level of the SAME language
         const nextLevel = lvl + 1;
         if (nextLevel <= maxLevel) {
           StorageManager.setCurrentLevel(lang, nextLevel);

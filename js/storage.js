@@ -368,14 +368,17 @@ export class StorageManager {
   }
 
   static getLevelStatus(language, levelNum) {
+    const lang = (language || 'html').toLowerCase();
     const lvl = parseInt(levelNum, 10);
+    const isCss = (lang === 'css');
+    const totalCount = isCss ? 1 : 30;
     const prog = this.getLanguageProgression(language);
     const unlocked = this.isLevelUnlocked(language, lvl);
     const lvlData = (prog.levels && prog.levels[lvl]) || { completed: false, challenges: {} };
     
     let completedCount = 0;
     if (lvlData.challenges) {
-      for (let ch = 1; ch <= 30; ch++) {
+      for (let ch = 1; ch <= totalCount; ch++) {
         if (lvlData.challenges[ch] && lvlData.challenges[ch].completed) {
           completedCount++;
         }
@@ -385,9 +388,9 @@ export class StorageManager {
     return {
       level: lvl,
       unlocked,
-      completed: Boolean(lvlData.completed || completedCount >= 30),
+      completed: Boolean(lvlData.completed || completedCount >= totalCount),
       completedCount,
-      totalCount: 30
+      totalCount
     };
   }
 
@@ -408,14 +411,18 @@ export class StorageManager {
   }
 
   /**
-   * Records a challenge completion, updates level statistics, and unlocks next level
-   * ONLY after all 30 challenges in the current level are completed.
+   * Records a challenge completion, updates level statistics, and unlocks next level.
+   * For CSS: 1 challenge per level unlocks next level (up to 100).
+   * For HTML / JS: 30 challenges per level unlocks next level (up to 70).
    */
   static recordChallengeCompletion(language, levelNum, challengeIndex, wpm, accuracy) {
     const state = this.getProgressionState();
     const lang = (language || 'html').toLowerCase();
     const lvl = parseInt(levelNum, 10);
     const ch = parseInt(challengeIndex, 10);
+    const isCss = (lang === 'css');
+    const requiredCount = isCss ? 1 : 30;
+    const maxTrackLevels = isCss ? 100 : 70;
 
     if (!state.languages[lang]) {
       state.languages[lang] = { currentLevel: 1, unlockedLevel: 1, levels: {} };
@@ -450,18 +457,18 @@ export class StorageManager {
       chRecord.bestAccuracy = accuracy;
     }
 
-    // Check if all 30 challenges in this level are now completed
+    // Check if required challenges in this level are now completed
     let completedCount = 0;
-    for (let c = 1; c <= 30; c++) {
+    for (let c = 1; c <= requiredCount; c++) {
       if (lvlData.challenges[c] && lvlData.challenges[c].completed) {
         completedCount++;
       }
     }
 
-    if (completedCount >= 30) {
+    if (completedCount >= requiredCount) {
       lvlData.completed = true;
-      // Unlocks next level only after all 30 challenges are completed
-      if (lvl === langProg.unlockedLevel && langProg.unlockedLevel < 70) {
+      // Unlocks next level only after required challenges are completed
+      if (lvl === langProg.unlockedLevel && langProg.unlockedLevel < maxTrackLevels) {
         langProg.unlockedLevel = lvl + 1;
       }
     }
@@ -565,5 +572,9 @@ export class StorageManager {
       console.warn('Error syncing cloud progress to local storage:', err);
     }
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.StorageManager = StorageManager;
 }
 

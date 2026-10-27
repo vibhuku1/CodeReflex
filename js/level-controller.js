@@ -164,21 +164,24 @@ export class LevelController {
     const langProg = StorageManager.getLanguageProgression(this.currentTrack);
     const currentLvl = langProg.currentLevel || 1;
     const langName = this.getLanguageDisplayName(this.currentTrack);
+    const maxLevels = this.currentTrack === 'css' ? 100 : 70;
+    const totalChallengesPerLevel = this.currentTrack === 'css' ? 1 : 30;
+    const totalInTrack = this.currentTrack === 'css' ? 100 : 2100;
 
     const status = StorageManager.getLevelStatus(this.currentTrack, currentLvl);
 
     if (this.headerStatusLabel) {
-      this.headerStatusLabel.textContent = `${langName}: LV ${currentLvl} (${status.completedCount}/30) • Browse 70 Levels`;
+      this.headerStatusLabel.textContent = `${langName}: LV ${currentLvl} (${status.completedCount}/${totalChallengesPerLevel}) • Browse ${maxLevels} Levels`;
     }
 
     // Update modal progress badge
     if (this.trackProgressBadge) {
       let totalCompletedInTrack = 0;
       if (langProg.levels) {
-        for (let l = 1; l <= 70; l++) {
+        for (let l = 1; l <= maxLevels; l++) {
           const lData = langProg.levels[l];
           if (lData && lData.challenges) {
-            for (let c = 1; c <= 30; c++) {
+            for (let c = 1; c <= totalChallengesPerLevel; c++) {
               if (lData.challenges[c] && lData.challenges[c].completed) {
                 totalCompletedInTrack++;
               }
@@ -186,7 +189,7 @@ export class LevelController {
           }
         }
       }
-      this.trackProgressBadge.textContent = `Unlocked: LV ${unlockedLevel}/70 • ${totalCompletedInTrack}/2,100 Completed`;
+      this.trackProgressBadge.textContent = `Unlocked: LV ${unlockedLevel}/${maxLevels} • ${totalCompletedInTrack}/${totalInTrack.toLocaleString()} Completed`;
     }
   }
 
@@ -197,6 +200,7 @@ export class LevelController {
     const lang = this.currentTrack;
     const allSummaries = getAllLevelsSummary(lang);
     const unlockedLevel = StorageManager.getUnlockedLevel(lang);
+    const maxChallengesPerLevel = lang === 'css' ? 1 : 30;
 
     allSummaries.forEach(lvlMeta => {
       const lvl = lvlMeta.level;
@@ -215,7 +219,8 @@ export class LevelController {
       card.className = `level-card ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''}`;
       card.dataset.level = lvl;
 
-      const progressPercent = Math.round((status.completedCount / 30) * 100);
+      const progressPercent = Math.round((status.completedCount / maxChallengesPerLevel) * 100);
+      const challengeLabel = maxChallengesPerLevel === 1 ? '1 Challenge' : '30 Challenges';
 
       card.innerHTML = `
         <div class="level-card-top">
@@ -225,12 +230,12 @@ export class LevelController {
           </div>
         </div>
         <div class="level-card-title">${lvlMeta.title}</div>
-        <div class="level-card-tier">${lvlMeta.tier} • 30 Challenges</div>
+        <div class="level-card-tier">${lvlMeta.tier} • ${challengeLabel}</div>
         <div class="level-progress-bar-wrap">
           <div class="level-progress-bar-fill" style="width: ${progressPercent}%;"></div>
         </div>
         <div class="level-card-footer">
-          <span class="level-progress-count">${status.completedCount}/30 Completed</span>
+          <span class="level-progress-count">${status.completedCount}/${maxChallengesPerLevel} Completed</span>
           <span class="level-action-label">${isUnlocked ? 'Practice →' : 'Requires LV ' + (lvl - 1)}</span>
         </div>
       `;
@@ -240,7 +245,7 @@ export class LevelController {
           this.openLevelChallenges(lvl);
         });
       } else {
-        card.title = `Locked: Complete all 30 challenges in Level ${lvl - 1} to unlock Level ${lvl}.`;
+        card.title = `Locked: Complete Level ${lvl - 1} to unlock Level ${lvl}.`;
       }
 
       this.levelsContainer.appendChild(card);
@@ -260,6 +265,8 @@ export class LevelController {
 
     const langName = this.getLanguageDisplayName(this.currentTrack);
     const meta = getLevelMeta(this.currentTrack, lvl);
+    const totalChallengesInLevel = this.currentTrack === 'css' ? 1 : 30;
+    const nextUnlockText = totalChallengesInLevel === 1 ? 'Complete to Unlock Next' : 'Complete 30 to Unlock Next';
 
     if (this.breadcrumbLabel) {
       this.breadcrumbLabel.textContent = `${langName} Track > Level ${lvl}: ${meta.title}`;
@@ -274,8 +281,8 @@ export class LevelController {
             <span class="level-tier-tag">${meta.tier} Tier</span>
           </div>
           <div class="level-overview-stats">
-            <span><strong>${status.completedCount} / 30</strong> Challenges Completed</span>
-            <span class="level-pass-target">Complete 30 to Unlock Next</span>
+            <span><strong>${status.completedCount} / ${totalChallengesInLevel}</strong> Challenge${totalChallengesInLevel > 1 ? 's' : ''} Completed</span>
+            <span class="level-pass-target">${nextUnlockText}</span>
           </div>
         </div>
         <h2 class="level-overview-title">${meta.title}</h2>
